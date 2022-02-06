@@ -2,7 +2,8 @@
 #depth-search limit
 #search heuristics
 #hash-table of considered states to avoid redoing work
-
+#remove recursion
+#replace state traces with move traces
 
 #datatype trace: state -> (next state -> trace) map
 
