@@ -5,6 +5,22 @@ class State:
     def __init__(self,player,board):
         self.player = player
         self.board = board
+    
+    def board_id(self):
+        b_string = ""
+        for i in range(3):
+            for j in range(3):
+                if self.board[i][j]:
+                    b_string += self.board[i][j]
+                else:
+                    b_string += "  "
+        return hash(b_string)
+    
+    def __eq__(self,other):
+        return self.board_id() == other.board_id() and self.player == other.player
+    
+    def __hash__(self):
+        return hash(hash(self.player) + self.board_id())
 
 def won(board):
     for i in range(3):
