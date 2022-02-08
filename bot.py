@@ -7,8 +7,6 @@
 #agent running concurrently with game
 #better frontier algorithm
 
-#datatype trace: state -> (next state -> trace) map
-
 #Type variables:
 #   action - should be immutable, equalityable, and hashable
 #   state  - should be immutable, equalityable, and hashable
@@ -21,15 +19,10 @@ class Node:
         self.value = value
         #value
 
-class Frontier:
-    def __init__(self):
-        self.nodes = []
-
-    def insert(self,node):
-        self.nodes.append(node)
-
-    def extract(self):
-        return self.nodes.pop()
+def printNode(node,level):
+    print(" " * level + str(node.state))
+    for act in node.children:
+        printNode(node.children[act],level + 1)
 
 class Agent:
     def __init__(
@@ -52,11 +45,13 @@ class Agent:
         curNodes = [node]
         while curNodes != []:
             curNode = curNodes.pop()
+            if value == 100:
+                print(curNode.state)
             for parent in curNode.parents:
                 parentTooLow = (
                     self.ourTurn(parent.state) and parent.value < value)
                 parentTooHigh = (
-                    not self.ourTurn(parent.state) and parent.value > value)
+                    (not self.ourTurn(parent.state)) and parent.value > value)
                 if parentTooLow or parentTooHigh:
                     parent.value = value
                     curNodes.append(parent)
@@ -76,16 +71,44 @@ class Agent:
                 node.children[act].parents.append(node)
             else:
                 node.children[act] = Node(
-                    actState,{}, node, self.evaluator(actState))
+                    actState,{}, [node], self.evaluator(actState))
                 self.frontier.insert(node.children[act])
+                self.stateMap[actState] = node.children[act]
             if (valueChild == None or 
                 cmp(valueChild.value,node.children[act].value)):
                 valueChild = node.children[act]
-        self.updateBranchValue(valueChild)
+        if valueChild != None:
+            self.updateBranchValue(valueChild)
 
     def calculate(self):
-        node = self.frontier.extract()
-        self.expandNode(node)
+        if not self.frontier.empty():
+            node = self.frontier.extract()
+            self.expandNode(node)
+
+    def bestAction(self):
+        if not self.ourTurn(self.tree.state):
+            return None
+        else:
+            bestAct = None
+            bestValue = None
+            for act in self.tree.children:
+                if bestAct == None or self.tree.children[act].value > bestValue:
+                    bestAct = act
+                    bestValue = self.tree.children[act].value
+            return bestAct
+
+    def updateState(self,state):
+        if state in self.stateMap:
+            self.tree = self.stateMap[state]
+        else:
+            #new state was not considered possible
+            print("Warning: moved to state outside stateMap")
+            self.tree = Node(state,{},[],self.evaluator(state))
+            self.stateMap[state] = self.tree
+            self.frontier.insert(self.tree)
+
+    def removeUnreachableFrontiers(self):
+        pass
 
     def printTree(self):
-        print("TODO")
+        printNode(self.tree,0)

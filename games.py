@@ -1,0 +1,2 @@
+class UnReachableState(Exception):
+    pass

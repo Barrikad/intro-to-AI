@@ -1,14 +1,26 @@
 import unittest
 
 from bot import *
+from frontiers import *
+import reach15 as r15
 
-class TestFrontier(unittest.TestCase):
+class TestBotDry(unittest.TestCase):
+    def test_small_tree(self):
+        pass
+
+class TestBotGameReach15(unittest.TestCase):
+    #test bot on reach15 game
     
-    def test_insert_extract_1(self):
-        node = Node(0,{},[],0)
-        frontier = Frontier()
-        frontier.insert(node)
-        self.assertEqual(node,frontier.extract())
+    def test_first_calculation(self):
+        bot = r15.makeReach15Bot("p1",Queue())
+        bot.calculate()
+        self.assertEqual(("p2",2),bot.tree.children[1].state)
 
+    def test_chooses_right_action(self):
+        bot = r15.makeReach15Bot("p1",Queue())
+        for i in range(10000):
+            bot.calculate()
+        self.assertEqual(2,bot.bestAction())
+        
 if __name__ == '__main__':
     unittest.main()

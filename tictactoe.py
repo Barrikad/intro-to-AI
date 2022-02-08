@@ -1,6 +1,8 @@
 from copy import deepcopy
 
+from bot import Agent
 
+#GAME DEFINITION
 class State:
     def __init__(self,player,board):
         self.player = player
@@ -34,36 +36,51 @@ def won(board):
         return board[0][2]
     return ""
 
-
-def evaluator(state):
-    #if it is p2's turn p1 just made the winning move
-    pwon = won(state.board)
-    if pwon == "p1":
-        return 100
-    elif pwon == "p2":
-        return -100
-    else:
-        return 0
-
 def switchPlayer(player):
     if player == "p1":
         return "p2"
     elif player == "p2":
         return "p1"
 
-def nextStates(state):
+def getActions(state):
     if won(state.board):
         return []
     else:
-        states = []
+        actions = []
         for i in range(3):
             for j in range(3):
                 if state.board[i][j] == "":
-                    nboard = deepcopy(state.board)
-                    nboard[i][j] = state.player
-                    nstate = State(switchPlayer(state.player),nboard)
-                    states.append(nstate)
-        return states
+                    actions.append((i,j))
+        return actions
+
+def performAction(state,action):
+    nboard = deepcopy(state.board)
+    nboard[action[0]][action[1]] = state.player
+    nstate = State(switchPlayer(state.player),nboard)
+    return nstate
+
+#---------------
+
+
+#BOT RELATED
+
+def evaluator(state,perspective):
+    #if it is p2's turn p1 just made the winning move
+    pwon = won(state.board)
+    if pwon == perspective:
+        return 100
+    elif pwon == "":
+        return 0
+    else:
+        return -100
+
+def makeTicTacToeBot(botPlayer,frontier,startState):
+    ourTurn = lambda state : state.player == botPlayer
+    evaluator_ = lambda state : evaluator(state,botPlayer)
+    bot = Agent(evaluator_,getActions,performAction,ourTurn,frontier,startState)
+    return bot
+
+#-----------
 
 def printBoard(board):
     print("..........")
