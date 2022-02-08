@@ -4,64 +4,88 @@
 #hash-table of considered states to avoid redoing work
 #remove recursion
 #replace state traces with move traces
+#agent running concurrently with game
+#better frontier algorithm
 
 #datatype trace: state -> (next state -> trace) map
 
-class Trace:
-    def __init__(self,state,traceMap):
+#Type variables:
+#   action - should be immutable, equalityable, and hashable
+#   state  - should be immutable, equalityable, and hashable
+
+class Node:
+    def __init__(self,state,children,parents,value):
         self.state = state
-        self.traceMap = traceMap
-        #minValue
+        self.children = children #map: action -> Node
+        self.parents = parents
+        self.value = value
+        #value
 
-def obtainTrace(evaluator,nextStates,player,state):
-    trace = None
-    #is it our turn
-    if state.player == player:#yes
-        next_states = nextStates(state)
-        #did we reach the end-state?
-        if next_states != []: #no
-            #process first possibility
-            nextState,*tail = next_states
-            maxminTrace = obtainTrace(evaluator,nextStates,player,nextState)
-            #process other possibilities
-            for nextState in tail:
-                #get trace resulting from this move
-                nextTrace = obtainTrace(evaluator,nextStates,player,nextState)
-                #is worst case scenario better than the other best possibility?
-                if nextTrace.minValue > maxminTrace.minValue:
-                    maxminTrace = nextTrace
-            trace = Trace(state,{maxminTrace.state : maxminTrace})
-            trace.minValue = maxminTrace.minValue
-        else: #yes
-            trace = Trace(state,{})
-            trace.minValue = evaluator(state)
-    else:#no
-        next_states = nextStates(state)
-        #did we reach the end-state?
-        if next_states != []: #no
-            #process first possibility
-            nextState,*tail = next_states
-            nextTrace = obtainTrace(evaluator,nextStates,player,nextState)
-            traceMap = {nextState:nextTrace}
-            minValue = nextTrace.minValue
-            #process other possibilities
-            for nextState in next_states:
-                #get trace resulting from this move
-                nextTrace = obtainTrace(evaluator,nextStates,player,nextState)
-                #add to map of possible opponent moves
-                traceMap[nextState] = nextTrace
-                #is this worst case scenario?
-                if nextTrace.minValue < minValue:
-                    minValue = nextTrace.minValue
-            trace = Trace(state,traceMap)
-            trace.minValue = minValue
-        else:#yes
-            trace = Trace(state,{})
-            trace.minValue = evaluator(state)
-    return trace
+class Frontier:
+    def __init__(self):
+        self.nodes = []
 
-def printTrace(statePrinter,level,trace):
-    statePrinter(trace.state)
-    for k in trace.traceMap:
-        printTrace(statePrinter,level + 1,trace.traceMap[k])
-        print("-" * level)
+    def insert(self,node):
+        self.nodes.append(node)
+
+    def extract(self):
+        return self.nodes.pop()
+
+class Agent:
+    def __init__(
+            self,
+            evaluator,getActions,simulator,ourTurn,
+            emptyFrontier,
+            startState):
+        self.ourTurn = ourTurn
+        self.getActions = getActions #fun: state -> action list
+        self.simulator = simulator #fun: state -> action -> state
+        self.evaluator = evaluator #fun: 
+        self.frontier = emptyFrontier
+        
+        self.tree = Node(startState,{},[],evaluator(startState))
+        self.stateMap = {startState : self.tree}
+        self.frontier.insert(self.tree)
+
+    def updateBranchValue(self,node):
+        value = node.value
+        curNodes = [node]
+        while curNodes != []:
+            curNode = curNodes.pop()
+            for parent in curNode.parents:
+                parentTooLow = (
+                    self.ourTurn(parent.state) and parent.value < value)
+                parentTooHigh = (
+                    not self.ourTurn(parent.state) and parent.value > value)
+                if parentTooLow or parentTooHigh:
+                    parent.value = value
+                    curNodes.append(parent)
+
+    def expandNode(self,node):
+        cmp = None
+        valueChild = None
+        if self.ourTurn(node.state):
+            cmp = lambda a,b : a < b
+        else:
+            cmp = lambda a,b : a > b
+
+        for act in self.getActions(node.state):
+            actState = self.simulator(node.state,act)
+            if actState in self.stateMap:
+                node.children[act] = self.stateMap[actState]
+                node.children[act].parents.append(node)
+            else:
+                node.children[act] = Node(
+                    actState,{}, node, self.evaluator(actState))
+                self.frontier.insert(node.children[act])
+            if (valueChild == None or 
+                cmp(valueChild.value,node.children[act].value)):
+                valueChild = node.children[act]
+        self.updateBranchValue(valueChild)
+
+    def calculate(self):
+        node = self.frontier.extract()
+        self.expandNode(node)
+
+    def printTree(self):
+        print("TODO")
