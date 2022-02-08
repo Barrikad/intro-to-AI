@@ -69,17 +69,16 @@ def evaluator(state,perspective):
     pwon = won(state.board)
     if pwon == perspective:
         return 100
-    elif pwon == "":
-        return 0
-    else:
+    elif pwon:
         return -100
+    else:
+        return 0
 
 def makeTicTacToeBot(botPlayer,frontier,startState):
     ourTurn = lambda state : state.player == botPlayer
     evaluator_ = lambda state : evaluator(state,botPlayer)
     bot = Agent(evaluator_,getActions,performAction,ourTurn,frontier,startState)
     return bot
-
 #-----------
 
 def printBoard(board):

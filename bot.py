@@ -1,15 +1,16 @@
 #IMPROVEMENTS
-#depth-search limit
 #search heuristics
-#hash-table of considered states to avoid redoing work
-#remove recursion
 #replace state traces with move traces
 #agent running concurrently with game
 #better frontier algorithm
+#make so bots can play eachother
 
 #Type variables:
 #   action - should be immutable, equalityable, and hashable
 #   state  - should be immutable, equalityable, and hashable
+
+from collections import deque
+
 
 class Node:
     def __init__(self,state,children,parents,value):
@@ -41,42 +42,37 @@ class Agent:
         self.frontier.insert(self.tree)
 
     def updateBranchValue(self,node):
-        value = node.value
-        curNodes = [node]
-        while curNodes != []:
-            curNode = curNodes.pop()
-            for parent in curNode.parents:
-                parentTooLow = (
-                    self.ourTurn(parent.state) and parent.value < value)
-                parentTooHigh = (
-                    (not self.ourTurn(parent.state)) and parent.value > value)
-                if parentTooLow or parentTooHigh:
-                    parent.value = value
-                    curNodes.append(parent)
+        nodes = deque()
+        nodes.append(node)
+        while nodes:
+            curNode = nodes.pop()
+            valueChild = None
+            for act in curNode.children:
+                childValue = curNode.children[act].value
+                if (valueChild == None
+                        or (self.ourTurn(curNode.state) and valueChild < childValue) 
+                        or (not self.ourTurn(curNode.state) and valueChild > childValue)):
+                    valueChild = childValue
+            if valueChild and curNode.value != valueChild:
+                curNode.value = valueChild
+                for parent in curNode.parents:
+                    nodes.append(parent)
 
     def expandNode(self,node):
-        cmp = None
-        valueChild = None
-        if self.ourTurn(node.state):
-            cmp = lambda a,b : a < b
-        else:
-            cmp = lambda a,b : a > b
+        possibleActions = self.getActions(node.state)
 
-        for act in self.getActions(node.state):
+        for act in possibleActions:
             actState = self.simulator(node.state,act)
             if actState in self.stateMap:
                 node.children[act] = self.stateMap[actState]
-                node.children[act].parents.append(node)
+                self.stateMap[actState].parents.append(node)
             else:
                 node.children[act] = Node(
                     actState,{}, [node], self.evaluator(actState))
                 self.frontier.insert(node.children[act])
                 self.stateMap[actState] = node.children[act]
-            if (valueChild == None or 
-                cmp(valueChild.value,node.children[act].value)):
-                valueChild = node.children[act]
-        if valueChild != None:
-            self.updateBranchValue(valueChild)
+        
+        self.updateBranchValue(node)
 
     def calculate(self):
         if not self.frontier.empty():
@@ -97,6 +93,8 @@ class Agent:
 
     def updateState(self,state):
         if state in self.stateMap:
+            if not self.stateMap[state] in self.tree.children.values():
+                print("Warning: impossible transition")
             self.tree = self.stateMap[state]
         else:
             #new state was not considered possible

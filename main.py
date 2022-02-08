@@ -98,6 +98,5 @@ def playReach15():
     print("Game over")
     print("Final state:")
     print(endState)
-    print(bot.stateMap[endState].value)
 
-playTictactoe()
+playReach15()
