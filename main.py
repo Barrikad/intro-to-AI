@@ -17,8 +17,6 @@ def playGame(
         #let bot calculate
         for i in range(BOT_TICKS):
             bot.calculate()
-        bot.printTree()
-        break
         # for act in bot.tree.children:
         #     print("--")
         #     print(act)
@@ -102,4 +100,4 @@ def playReach15():
     print(endState)
     print(bot.stateMap[endState].value)
 
-playReach15()
+playTictactoe()

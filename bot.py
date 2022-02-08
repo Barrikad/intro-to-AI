@@ -45,8 +45,6 @@ class Agent:
         curNodes = [node]
         while curNodes != []:
             curNode = curNodes.pop()
-            if value == 100:
-                print(curNode.state)
             for parent in curNode.parents:
                 parentTooLow = (
                     self.ourTurn(parent.state) and parent.value < value)
