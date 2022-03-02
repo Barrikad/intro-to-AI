@@ -99,4 +99,4 @@ def playReach15():
     print("Final state:")
     print(endState)
 
-playReach15()
+playTictactoe()

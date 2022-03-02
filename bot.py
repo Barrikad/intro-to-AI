@@ -4,6 +4,13 @@
 #agent running concurrently with game
 #better frontier algorithm
 #make so bots can play eachother
+#don't choose looping actions if avoidable
+
+#PROPERTIES OF A GOOD AI
+#quality of solution should be proportional to provided computational-power:
+#-a somewhat sensical action should be chosen even if goal has not been found
+#-something like breadth first search is preferable
+#
 
 #Type variables:
 #   action - should be immutable, equalityable, and hashable
