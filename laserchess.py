@@ -176,6 +176,12 @@ def addCoords(xy1,xy2):
 def dirVector(orient):
     return [(0,1),(1,0),(0,-1),(-1,0)][orient]
 
+def hitResult(piece,beamOrient):
+    pass
+
+def beamHits(board,origin,orient):
+    pass
+
 #Assumes that the action is valid
 #Checks for this should be made before calling the function
 def performAction(state,action):
@@ -183,9 +189,9 @@ def performAction(state,action):
     if action[0] == "f":
         lcoords, _, lindex = tryFindLaser(board(state),curPlayer(state))
         lorient = actionOrient(action)
-
+        
     elif action[0] == "m":
         pass
     elif action[0] == "r":
         pass
-    return nstate
+    return (nextPlayer(curPlayer(state)),tuple(mutBoard))
