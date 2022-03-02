@@ -1,5 +1,6 @@
 #GENERAL NOTES
 #I use immutable datatypes, since the states will be used as keys in maps
+#I avoid indexing these tuples directly so that representation can be changed
 #Board is 9x9 tiles, unlike chess
 #Simplifications compared to https://archive.org/details/1987-06-compute-magazine/page/n27/mode/2up?view=theater:
 # just one action per turn, instead of two
@@ -9,11 +10,11 @@
 
 #REPRESENTING THE GAME IN PYTHON
 #Piece represented by tuple where 
-# first value is player owning the piece
-# second value is name of piece
+# first value is horizontal coordinate (increases eastwards)
+# second value is vertical coordinate (increases northwards)
 # third value is orientation of piece
-# fourth value is horizontal coordinate (increases eastwards)
-# fifth value is vertical coordinate (increases northwards)
+# fourth value is name of piece
+# fifth value is player owning the piece
 #Name of player is some character ("1" for p1, "2" for p2)
 #Name of piece is one of 
 # "k":king, "l":laser cannon, "b":block, "s":splitter, "d":diagonal, "t":triangular
@@ -22,7 +23,7 @@
 #Coordinates is integer between 0 and 8
 
 #p1's laser cannon at south-east corner pointing east:
-#("1","l",1,0,8)
+#(0,8,1,"l","1")
 
 #State represented by tuple where first value is player to make a turn 
 #second value is board
@@ -33,8 +34,8 @@
 #(
 #   "1",
 #   (
-#       ("1","k",3,4,5),
-#       ("2","k",1,2,0)
+#       (4,5,3,"k","1"),
+#       (2,0,1,"k","2")
 #   )
 #)
 
@@ -92,23 +93,99 @@
 # t3 b0 b0 b0 b0 s2 b0 b0 t0
 # t0 t0 d3 b0 k0 l0 t0 d3 d3
 
+#Some abbreviations for more readable code
+#Change these if representation changes
+#PIECE
+def coords(piece):
+    return (piece[0],piece[1])
 
-def mutableState(state):
-    mstate = list(state)
-    mstate[1] = [
-        [
-            (None if tile == None else list(tile)) 
-            for tile in list(column)
-        ] 
-        for column in list(mstate[1])]
-    return mstate
+def orient(piece):
+    return piece[2]
 
-#potentially destructive of input state
-def immutableState(state):
-    for i in len(state[1]):
-        for j in len(state[1][i]):
-            if state[1][i][j] != None:
-                state[1][i][j] = tuple(state[1][i][j])
-        state[1][i] = tuple(state[1][i])
-    return tuple(state)
+def pieceName(piece):
+    return piece[3]
 
+def owner(piece):
+    return piece[4]
+
+#STATE
+def curPlayer(state):
+    return state[0]
+
+def board(state):
+    return state[1]
+
+#ACTION
+def actionName(action):
+    return action[0]
+
+def actionOrient(action):
+    if actionName(action) == "f":
+        return action[1]
+    else:
+        return action[3]
+    
+def actionCoords(action):
+    if actionName(action) == "f":
+        return None
+    else:
+        return (action[1],action[2])
+
+def actionMove(action):
+    if actionName(action) == "m":
+        return action[4]
+    else:
+        return None
+
+#Return next player
+#Defines the number of players
+def nextPlayer(player):
+    if player == "1":
+        return "2"
+    else:
+        return "1"
+
+#Could change to binary search, but might not be worth it
+#Searches for piece at the given coordinates
+#Returns name and owner of piece and index in board tuple if present
+#Returns None otherwise
+def tryFindPiece(board,x,y):
+    for i in range(len(board)):
+        piece = board[i]
+        if coords(piece) == (x,y):
+            return (pieceName(piece),owner(piece),i)
+        elif coords(piece) > (x,y):
+            break
+    return None
+
+#Searches for laser belonging to a given player
+#Returns coords and orientation and index in board tuple if present
+#Returns None otherwise
+def tryFindLaser(board,player):
+    for i in range(len(board)):
+        piece = board[i]
+        if pieceName(piece) == "l" and owner(piece) == player:
+            return (coords(piece),orient(piece),i)
+    return None
+
+#Coordinate addition
+def addCoords(xy1,xy2):
+    return (xy1[0] + xy2[0],xy1[1] + xy2[1])
+
+#translates orientation integer to direction vector
+def dirVector(orient):
+    return [(0,1),(1,0),(0,-1),(-1,0)][orient]
+
+#Assumes that the action is valid
+#Checks for this should be made before calling the function
+def performAction(state,action):
+    mutBoard = list(board(state))
+    if action[0] == "f":
+        lcoords, _, lindex = tryFindLaser(board(state),curPlayer(state))
+        lorient = actionOrient(action)
+
+    elif action[0] == "m":
+        pass
+    elif action[0] == "r":
+        pass
+    return nstate

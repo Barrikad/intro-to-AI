@@ -5,6 +5,7 @@
 #better frontier algorithm
 #make so bots can play eachother
 #don't choose looping actions if avoidable
+#randomize choice of near equal actions
 
 #PROPERTIES OF A GOOD AI
 #quality of solution should be proportional to provided computational-power:
@@ -21,11 +22,10 @@ from collections import deque
 
 class Node:
     def __init__(self,state,children,parents,value):
-        self.state = state
+        self.state = state 
         self.children = children #map: action -> Node
-        self.parents = parents
-        self.value = value
-        #value
+        self.parents = parents #Node list
+        self.value = value #int
 
 def printNode(node,level):
     print(" " * level + str(node.state))
