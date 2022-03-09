@@ -17,7 +17,12 @@
 # fifth value is player owning the piece
 #Name of player is some character ("1" for p1, "2" for p2)
 #Name of piece is one of 
-# "k":king, "l":laser cannon, "b":block, "s":splitter, "d":diagonal, "t":triangular
+# "k":king, 
+# "l":laser cannon, 
+# "b":block, 
+# "s":splitter, 
+# "d":diagonal, 
+# "t":triangular
 #Orientation is one of 
 # 0:North, 1:East, 2:South, 3:West
 #Coordinates is integer between 0 and 8
@@ -76,7 +81,7 @@
 #diagonal mirror cannot capture
 # if hit from front, redirects to the right and vice versa
 # if hit from back, redirects to the left and vice versa
-# can therefore not be destroyed be lasers
+# can therefore not be destroyed by lasers
 #triangular mirror cannot capture
 # if hit from front redirects to the right and vice versa
 # destroyed if hit from back or left 
@@ -93,13 +98,16 @@
 # t3 b0 b0 b0 b0 s2 b0 b0 t0
 # t0 t0 d3 b0 k0 l0 t0 d3 d3
 
+from util import binarySearch
+
+
 #Some abbreviations for more readable code
 #Change these if representation changes
 #PIECE
-def coords(piece):
+def pieceCoords(piece):
     return (piece[0],piece[1])
 
-def orient(piece):
+def pieceOrient(piece):
     return piece[2]
 
 def pieceName(piece):
@@ -107,6 +115,21 @@ def pieceName(piece):
 
 def owner(piece):
     return piece[4]
+
+def movePiece(piece,coords):
+    return (coords[0],coords[1],piece[2],piece[3],piece[4])
+
+def rotatePiece(piece,orient):
+    return (piece[0],piece[1],orient,piece[3],piece[4])
+
+def mrPiece(piece,coords,orient):
+    return (coords[0],coords[1],orient,piece[3],piece[4])
+
+def outOfBounds(coords):
+    if coords[0] < 0 or coords[1] < 0 or coords[0] > 8 or coords[1] > 8:
+        return True
+    else:
+        return False
 
 #STATE
 def curPlayer(state):
@@ -145,18 +168,15 @@ def nextPlayer(player):
     else:
         return "1"
 
-#Could change to binary search, but might not be worth it
 #Searches for piece at the given coordinates
 #Returns name and owner of piece and index in board tuple if present
 #Returns None otherwise
-def tryFindPiece(board,x,y):
-    for i in range(len(board)):
-        piece = board[i]
-        if coords(piece) == (x,y):
-            return (pieceName(piece),owner(piece),i)
-        elif coords(piece) > (x,y):
-            break
-    return None
+def tryFindPiece(board,coords):
+    sup = binarySearch(board,coords,"sup")
+    if sup != None and pieceCoords(sup[0]) == coords:
+        return sup
+    else:
+        return None
 
 #Searches for laser belonging to a given player
 #Returns coords and orientation and index in board tuple if present
@@ -165,7 +185,7 @@ def tryFindLaser(board,player):
     for i in range(len(board)):
         piece = board[i]
         if pieceName(piece) == "l" and owner(piece) == player:
-            return (coords(piece),orient(piece),i)
+            return (piece,i)
     return None
 
 #Coordinate addition
@@ -177,10 +197,66 @@ def dirVector(orient):
     return [(0,1),(1,0),(0,-1),(-1,0)][orient]
 
 def hitResult(piece,beamOrient):
-    pass
+    #defines which side the piece is hit from
+    #0=back, 1=left, 2=front, 3=right
+    #there is probably an easier way to calculate this
+    hitSide = (pieceOrient(piece) - beamOrient) % 4
+    if pieceOrient(piece) == beamOrient:
+        hitSide = 0
+    elif (pieceOrient(piece) + 1) % 4 == beamOrient:
+        hitSide = 1
+    elif abs(pieceOrient(piece)-beamOrient) == 2:
+        hitSide = 2
+    elif (pieceOrient(piece) + 3) % 4 == beamOrient:
+        hitSide = 3
 
+    if pieceName(piece) == "k" or pieceName(piece) == "l":
+        #king and laser are always captured by laser
+        return ("c",)
+    elif pieceName(piece) == "b":
+        #is block and laser are pointing in opposite direction?
+        if hitSide == 2:
+            return ("r",pieceOrient(piece))
+        else:
+            return ("c",)
+    elif pieceName(piece) == "s":
+        if hitSide == 1 or hitSide == 3:
+            return ("r",pieceOrient(piece))
+        elif hitSide == 2:
+            return ("s",(pieceOrient(piece) + 1) % 4, (pieceOrient(piece) - 1) % 4)
+        else:
+            return ("c",)
+    elif pieceName(piece) == "d":
+        if hitSide == 0 or hitSide == 2:
+            return ("r",(beamOrient - 1) % 4)
+        elif hitSide == 1 or hitSide == 3:
+            return ("r",(beamOrient + 1) % 4)
+    elif pieceName(piece) == "t":
+        if hitSide == 2:
+            return ("r",(beamOrient - 1) % 4)
+        elif hitSide == 3:
+            return ("r",(beamOrient + 1) % 4)
+        else:
+            return ("c",)
+
+#Could loop forever, but that state should be unreachable
 def beamHits(board,origin,orient):
-    pass
+    newPosition = addCoords(origin,dirVector(orient))
+    print(newPosition)
+    if outOfBounds(newPosition):
+        return []
+    
+    hit = tryFindPiece(board,newPosition)
+    if hit == None:
+        return beamHits(board,newPosition,orient)
+
+    hr = hitResult(hit[0],orient)
+    if hr[0] == "c":
+        return [hit]
+    elif hr[0] == "r":
+        return beamHits(board,newPosition,hr[1])
+    elif hr[0] == "s":
+        return beamHits(board,newPosition,hr[1]) + beamHits(board,newPosition,hr[2])
 
 #Assumes that the action is valid
 #Checks for this should be made before calling the function
@@ -195,3 +271,9 @@ def performAction(state,action):
     elif action[0] == "r":
         pass
     return (nextPlayer(curPlayer(state)),tuple(mutBoard))
+
+# king = (3,6,3,"k","2")
+# diagonal = (2,2,0,"d","2")
+# board = (diagonal,king)
+# bh = beamHits(board,(2,5),2)
+# print("finally: " + str([(king,1)]) + " - " + str(bh))

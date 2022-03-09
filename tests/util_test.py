@@ -16,8 +16,8 @@ def slowInf(list,element):
             return (list[len(list) - i - 1],len(list) - i - 1)
     return None
 
-#bad test design but whatever
 class TestBinarySearch(unittest.TestCase):
+    #bad test design but whatever 
     def test_random_search(self):
         for i in range(5):
             count = 0
@@ -35,6 +35,14 @@ class TestBinarySearch(unittest.TestCase):
                 if sup == inf:
                     self.assertEqual(sup,binarySearch(list,element,"eq"))
 
+    def test_find_piece(self):
+        board = [(4,5,0,"k","1"),(1,5,1,"l","1"),(6,7,2,"t","2"),(1,1,0,"d","2"),(0,8,3,"d","1"),(5,2,1,"l","2")]
+        board.sort()
+        board = tuple(board)
+        coords = (3,4)
+        self.assertEqual((4,5,0,"k","1"),binarySearch(board,coords,"sup")[0])
+        coords = (6,7)
+        self.assertEqual((6,7,2,"t","2"),binarySearch(board,coords,"sup")[0])
         
 if __name__ == '__main__':
     unittest.main()

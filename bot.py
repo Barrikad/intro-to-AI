@@ -1,11 +1,11 @@
 #IMPROVEMENTS
 #search heuristics
-#replace state traces with move traces
 #agent running concurrently with game
 #better frontier algorithm
-#make so bots can play eachother
 #don't choose looping actions if avoidable
 #randomize choice of near equal actions
+#try monte carlo
+#alpha-beta pruning
 
 #PROPERTIES OF A GOOD AI
 #quality of solution should be proportional to provided computational-power:
@@ -41,7 +41,7 @@ class Agent:
         self.ourTurn = ourTurn
         self.getActions = getActions #fun: state -> action list
         self.simulator = simulator #fun: state -> action -> state
-        self.evaluator = evaluator #fun: 
+        self.evaluator = evaluator #fun: state -> int
         self.frontier = emptyFrontier
         
         self.tree = Node(startState,{},[],evaluator(startState))
