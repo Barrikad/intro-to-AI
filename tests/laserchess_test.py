@@ -1,6 +1,6 @@
 import unittest
 
-from laserchess import beamHits, board, hitResult, pieceOrient, rotatePiece
+from laserchess import beamHits, board, hitResult, mrPiece, performAction, pieceOrient, rotatePiece
 
 
 class TestHitResults(unittest.TestCase):
@@ -105,3 +105,126 @@ class TestLaserBeam(unittest.TestCase):
         expected = [(king2,board.index(king2)),(block2,board.index(block2))]
         expected.sort()
         self.assertEqual(expected,bh)
+        
+
+class TestPerformAction(unittest.TestCase):
+    def test_rotate_diagonal(self):
+        diagonal1 = (2,2,0,"t","2")
+        diagonal2 = (6,2,3,"t","2")
+        king1 = (4,7,3,"k","2")
+        king2 = (6,6,3,"k","2")
+        block1 = (2,6,2,"b","2")
+        block2 = (4,6,0,"b","2")
+        splitter = (4,2,0,"s","1")
+        board = [diagonal1,diagonal2,king1,king2,block1,block2,splitter]
+        board.sort()
+        board = tuple(board)
+        state = ("1",board)
+
+        action = ("r",2,2,2)
+
+        eboard = [
+            rotatePiece(diagonal1,2),
+            diagonal2,
+            king1,
+            king2,
+            block1,
+            block2,
+            splitter
+            ]
+        eboard.sort()
+        eboard = tuple(eboard)
+        expected = ("2",eboard)
+
+        self.assertEqual(expected,performAction(state,action))
+        
+    def test_move_king(self):
+        diagonal1 = (2,2,0,"t","2")
+        diagonal2 = (6,2,3,"t","2")
+        king1 = (4,7,3,"k","2")
+        king2 = (6,6,3,"k","2")
+        block1 = (2,6,2,"b","2")
+        block2 = (4,6,0,"b","2")
+        splitter = (4,2,0,"s","1")
+        board = [diagonal1,diagonal2,king1,king2,block1,block2,splitter]
+        board.sort()
+        board = tuple(board)
+        state = ("1",board)
+
+        action = ("m",6,6,1,1)
+
+        eboard = [
+            diagonal1,
+            diagonal2,
+            king1,
+            mrPiece(king2,(7,6),1),
+            block1,
+            block2,
+            splitter
+            ]
+        eboard.sort()
+        eboard = tuple(eboard)
+        expected = ("2",eboard)
+
+        self.assertEqual(expected,performAction(state,action))
+
+    def test_fire_laser(self):
+        diagonal1 = (2,2,0,"t","2")
+        diagonal2 = (6,2,3,"t","2")
+        king1 = (4,7,3,"k","2")
+        king2 = (6,6,3,"k","2")
+        block1 = (2,6,2,"b","2")
+        block2 = (4,6,0,"b","2")
+        splitter = (4,2,0,"s","1")
+        laser = (4,5,3,"l","1")
+        board = [diagonal1,diagonal2,king1,king2,block1,block2,splitter,laser]
+        board.sort()
+        board = tuple(board)
+        state = ("1",board)
+
+        action = ("f",2)
+
+        eboard = [
+            diagonal1,
+            diagonal2,
+            king1,
+            block1,
+            block2,
+            splitter,
+            ]
+        eboard.sort()
+        eboard = tuple(eboard)
+        expected = ("2",eboard)
+
+        self.assertEqual(expected,performAction(state,action))
+
+    def test_capture(self):
+        diagonal1 = (2,2,0,"t","2")
+        diagonal2 = (6,2,3,"t","2")
+        king1 = (4,7,3,"k","1")
+        king2 = (6,6,3,"k","2")
+        block1 = (2,6,2,"b","2")
+        block2 = (4,6,0,"b","2")
+        splitter = (4,2,0,"s","1")
+        laser = (4,5,3,"l","1")
+        board = [diagonal1,diagonal2,king1,king2,block1,block2,splitter,laser]
+        board.sort()
+        board = tuple(board)
+        state = ("1",board)
+
+        action = ("c",4,7,1,2)
+
+        eboard = [
+            diagonal1,
+            diagonal2,
+            mrPiece(king1,(4,6),1),
+            king2,
+            block1,
+            splitter,
+            laser
+            ]
+        eboard.sort()
+        eboard = tuple(eboard)
+        expected = ("2",eboard)
+
+        self.assertEqual(expected,performAction(state,action))

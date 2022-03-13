@@ -45,13 +45,15 @@
 #)
 
 #An action is a tuple
-#First element is either "f"(fire laser), "m"(move piece), or "r" (rotate piece)
+#First element is either "f"(fire laser), "m"(move piece), "c"(capture piece), or "r" (rotate piece)
 #If first element is "f" 
 # then second element is an integer representing new orientation of laser (before firing)
 #If first element is "m"
 # then second and third element is position of chosen piece
 # fourth element is new orientation of chosen piece
 # fifth element is direction in which piece moves by one
+#If first element is "c"
+# same as "m"
 #If first element is "r"
 # then second and third element is position of chosen piece
 # fourth element is new orientation of chosen piece
@@ -98,6 +100,7 @@
 # t3 b0 b0 b0 b0 s2 b0 b0 t0
 # t0 t0 d3 b0 k0 l0 t0 d3 d3
 
+from shutil import move
 from util import binarySearch
 
 
@@ -155,7 +158,7 @@ def actionCoords(action):
         return (action[1],action[2])
 
 def actionMove(action):
-    if actionName(action) == "m":
+    if actionName(action) == "m" or actionName(action) == "c":
         return action[4]
     else:
         return None
@@ -242,7 +245,6 @@ def hitResult(piece,beamOrient):
 #Could loop forever, but that state should be unreachable
 def beamHits(board,origin,orient):
     newPosition = addCoords(origin,dirVector(orient))
-    print(newPosition)
     if outOfBounds(newPosition):
         return []
     
@@ -262,14 +264,38 @@ def beamHits(board,origin,orient):
 #Checks for this should be made before calling the function
 def performAction(state,action):
     mutBoard = list(board(state))
-    if action[0] == "f":
-        lcoords, _, lindex = tryFindLaser(board(state),curPlayer(state))
+
+    if actionName(action) == "f":
+        #find position, index and new orientation of laser
+        laser, lindex = tryFindLaser(board(state),curPlayer(state))
         lorient = actionOrient(action)
         
-    elif action[0] == "m":
-        pass
-    elif action[0] == "r":
-        pass
+        #rotate laser 
+        mutBoard[lindex] = rotatePiece(mutBoard[lindex],lorient)
+
+        #calculate hit pieces and remove from board
+        bh = beamHits(mutBoard,pieceCoords(laser),lorient)
+        for p,_ in bh:
+            mutBoard.remove(p)
+    elif actionName(action) == "m" or actionName(action) == "c":
+        #find piece
+        piece, pindex = tryFindPiece(board(state),actionCoords(action))
+        #new coordinates
+        newCoords = addCoords(actionCoords(action),dirVector(actionMove(action)))
+        #mark piece for capture
+        if actionName(action) == "c":
+            _,cindex = tryFindPiece(board(state),newCoords)
+        #move and rotate piece
+        mutBoard[pindex] = mrPiece(piece,newCoords,actionOrient(action))
+        #capture marked piece
+        if actionName(action) == "c":
+            mutBoard.pop(cindex)
+    elif actionName(action) == "r":
+        #find piece
+        piece,pindex = tryFindPiece(board(state),actionCoords(action))
+        #rotate piece
+        mutBoard[pindex] = rotatePiece(piece,actionOrient(action))
+
     return (nextPlayer(curPlayer(state)),tuple(mutBoard))
 
 # king = (3,6,3,"k","2")
