@@ -6,6 +6,7 @@
 #randomize choice of near equal actions
 #try monte carlo
 #alpha-beta pruning
+#test bot with much datapower against bot with little
 
 #PROPERTIES OF A GOOD AI
 #quality of solution should be proportional to provided computational-power:

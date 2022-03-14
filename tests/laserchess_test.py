@@ -1,6 +1,6 @@
 import unittest
 
-from laserchess import beamHits, board, hitResult, mrPiece, performAction, pieceOrient, rotatePiece
+from laserchess import beamHits, board, getActions, hitResult, mrPiece, performAction, pieceOrient, rotatePiece
 
 
 class TestHitResults(unittest.TestCase):
@@ -228,3 +228,74 @@ class TestPerformAction(unittest.TestCase):
         expected = ("2",eboard)
 
         self.assertEqual(expected,performAction(state,action))
+
+
+class TestGetActions(unittest.TestCase):
+    def test_both_kings_present(self):
+        diagonal1 = (2,2,0,"t","2")
+        diagonal2 = (6,2,3,"t","2")
+        king1 = (4,7,3,"k","1")
+        king2 = (6,6,3,"k","2")
+        block1 = (2,6,2,"b","2")
+        block2 = (4,6,0,"b","2")
+        splitter = (0,2,0,"s","1")
+        laser = (4,5,3,"l","1")
+        board = [diagonal1,diagonal2,king1,king2,block1,block2,splitter,laser]
+        board.sort()
+        board = tuple(board)
+        state = ("1",board)
+        actual = getActions(state)
+
+        #king can move and capture
+        self.assertIn(("c",4,7,0,2),actual)
+        self.assertIn(("m",4,7,1,3),actual)
+        self.assertIn(("m",4,7,2,0),actual)
+        self.assertIn(("m",4,7,3,0),actual)
+        self.assertIn(("m",4,7,0,1),actual)
+        self.assertIn(("c",4,7,1,2),actual)
+        self.assertIn(("m",4,7,2,3),actual)
+
+        #splitter can move
+        self.assertIn(("m",0,2,1,1),actual)
+        self.assertIn(("m",0,2,0,2),actual)
+        self.assertIn(("m",0,2,3,0),actual)
+
+        #laser can rotate and fire
+        self.assertIn(("f",0),actual)
+        self.assertIn(("f",2),actual)
+        self.assertIn(("f",3),actual)
+
+        #splitter can rotate
+        self.assertIn(("r",0,2,1),actual)
+
+        #splitter can't rotate to current orientation
+        self.assertNotIn(("r",0,2,0),actual)
+
+        #opponent can't move
+        self.assertNotIn(("c",4,6,0,2),actual)
+        self.assertNotIn(("m",4,6,0,1),actual)
+
+        #laser can't capture
+        self.assertNotIn(("c",4,5,0,0),actual)
+        self.assertNotIn(("m",4,5,0,0),actual)
+
+        #splitter is blocked by wall
+        self.assertNotIn(("m",0,2,0,3),actual)
+        self.assertNotIn(("m",0,2,2,3),actual)
+        self.assertNotIn(("m",0,2,1,3),actual)
+
+    def test_one_king_missing(self):
+        diagonal1 = (2,2,0,"t","2")
+        diagonal2 = (6,2,3,"t","2")
+        king1 = (4,7,3,"k","1")
+        block1 = (2,6,2,"b","2")
+        block2 = (4,6,0,"b","2")
+        splitter = (0,2,0,"s","1")
+        laser = (4,5,3,"l","1")
+        board = [diagonal1,diagonal2,king1,block1,block2,splitter,laser]
+        board.sort()
+        board = tuple(board)
+        state = ("1",board)
+        actual = getActions(state)
+
+        self.assertEqual([],actual)

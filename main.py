@@ -99,4 +99,9 @@ def playReach15():
     print("Final state:")
     print(endState)
 
+#OPTIONS
+#printMode: "a" for all states, "e" for only end-state, "n" for none
+def bot_battle_laserchess(printMode = "n"):
+    pass
+
 playTictactoe()

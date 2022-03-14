@@ -101,6 +101,7 @@
 # t0 t0 d3 b0 k0 l0 t0 d3 d3
 
 from shutil import move
+from tictactoe import switchPlayer
 from util import binarySearch
 
 
@@ -116,7 +117,7 @@ def pieceOrient(piece):
 def pieceName(piece):
     return piece[3]
 
-def owner(piece):
+def pieceOwner(piece):
     return piece[4]
 
 def movePiece(piece,coords):
@@ -187,7 +188,7 @@ def tryFindPiece(board,coords):
 def tryFindLaser(board,player):
     for i in range(len(board)):
         piece = board[i]
-        if pieceName(piece) == "l" and owner(piece) == player:
+        if pieceName(piece) == "l" and pieceOwner(piece) == player:
             return (piece,i)
     return None
 
@@ -298,8 +299,93 @@ def performAction(state,action):
 
     return (nextPlayer(curPlayer(state)),tuple(mutBoard))
 
-# king = (3,6,3,"k","2")
-# diagonal = (2,2,0,"d","2")
-# board = (diagonal,king)
-# bh = beamHits(board,(2,5),2)
-# print("finally: " + str([(king,1)]) + " - " + str(bh))
+def getActions(state):
+    kings = 0
+    actions = []
+    for i in range(len(board(state))):
+        piece = board(state)[i]
+        #register king if king
+        if pieceName(piece) == "k":
+            kings += 1
+
+        #skip if opponents piece
+        if pieceOwner(piece) != curPlayer(state):
+            continue
+
+        #fire laser if laser
+        if pieceName(piece) == "l":
+            for r in range(4):
+                actions.append(("f",r))
+        
+        #calculate types of moves 
+        moved = addCoords(pieceCoords(piece),(0,1))
+        if (i < len(board(state)) - 1 and 
+                pieceCoords(board(state)[i + 1]) == moved and
+                pieceOwner(board(state)[i + 1]) != curPlayer(state)):
+            north = "c"
+        elif moved[1] <= 8:
+            north = "m"
+        else:
+            north = "x"
+        moved = addCoords(pieceCoords(piece),(1,0))
+        hit = tryFindPiece(board(state),moved)
+        if hit != None and pieceOwner(hit) != curPlayer(state):
+            east = "c"
+        elif moved[0] <= 8:
+            east = "m"
+        else:
+            east = "x"
+        moved = addCoords(pieceCoords(piece),(0,-1))
+        if (i > 1 and pieceCoords(board(state)[i - 1]) == moved and
+                pieceOwner(board(state)[i - 1]) != curPlayer(state)):
+            south = "c"
+        elif moved[1] >= 0:
+            south = "m"
+        else:
+            south = "x"
+        moved = addCoords(pieceCoords(piece),(-1,0))
+        hit = tryFindPiece(board(state),moved)
+        if hit != None and pieceOwner(hit) != curPlayer(state):
+            west = "c"
+        elif moved[0] >= 0:
+            west = "m"
+        else:
+            west = "x"
+        
+        #add moves
+        moves = [north,east,south,west]
+        for m in range(4):
+            for r in range(4):
+                if moves[m] == "m":
+                    actions.append(
+                        ("m",pieceCoords(piece)[0],pieceCoords(piece)[1],r,m))
+                if moves[m] == "c" and pieceName(piece) in ["k","b"]:
+                    actions.append(
+                        ("c",pieceCoords(piece)[0],pieceCoords(piece)[1],r,m))
+        
+        #add rotations
+        for r in range(4):
+            if r != pieceOrient(piece):
+                actions.append(
+                    ("r",pieceCoords(piece)[0],pieceCoords(piece)[1],r))
+
+    #return actions if not endstate
+    if kings != 2:
+        return []
+    return actions
+
+
+
+
+#hardcoded for "1" and "2"
+def won(board):
+    players = ["1","2"]
+    for piece in board:
+        if pieceName(piece) == "k":
+            players.remove(pieceOwner(piece))
+    if players == []:
+        return "tie"
+    elif players == ["1","2"]:
+        return ""
+    else:
+        return switchPlayer(players[0])
