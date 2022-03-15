@@ -5,7 +5,7 @@
 #don't choose looping actions if avoidable
 #randomize choice of near equal actions
 #try monte carlo
-#alpha-beta pruning
+#alpha-beta pruning (this might not actually influence performance as we almost never have nodes with static value)
 #test bot with much datapower against bot with little
 
 #PROPERTIES OF A GOOD AI
@@ -19,6 +19,7 @@
 #   state  - should be immutable, equalityable, and hashable
 
 from collections import deque
+import random
 
 
 class Node:
@@ -91,13 +92,17 @@ class Agent:
         if not self.ourTurn(self.tree.state):
             return None
         else:
-            bestAct = None
+            bestActs = []
             bestValue = None
             for act in self.tree.children:
-                if bestAct == None or self.tree.children[act].value > bestValue:
-                    bestAct = act
+                if bestValue == None or self.tree.children[act].value > bestValue + 10:
+                    bestActs = [act]
                     bestValue = self.tree.children[act].value
-            return bestAct
+                elif abs(self.tree.children[act].value - bestValue) <= 10:
+                    bestActs.append(act)
+            if bestActs == []:
+                return None
+            return random.choice(bestActs)
 
     def updateState(self,state):
         if state in self.stateMap:

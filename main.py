@@ -112,7 +112,7 @@ def botBattleLaserchess(printMode = "n"):
     bot2.calculate()
     bot2.calculate()
     for i in range(40):
-        for j in range(1000):
+        for _ in range(2000):
             bot1.calculate()
         act = bot1.bestAction()
         print(act)
@@ -126,7 +126,7 @@ def botBattleLaserchess(printMode = "n"):
         if lc.won(state[1]):
             break
 
-        for j in range(1000):
+        for _ in range(2000):
             bot2.calculate()
         act = bot2.bestAction()
         print(act)
