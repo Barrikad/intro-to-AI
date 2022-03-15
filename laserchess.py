@@ -100,8 +100,6 @@
 # t3 b0 b0 b0 b0 s2 b0 b0 t0
 # t0 t0 d3 b0 k0 l0 t0 d3 d3
 
-from shutil import move
-from tictactoe import switchPlayer
 from util import binarySearch
 
 
@@ -296,7 +294,7 @@ def performAction(state,action):
         piece,pindex = tryFindPiece(board(state),actionCoords(action))
         #rotate piece
         mutBoard[pindex] = rotatePiece(piece,actionOrient(action))
-
+    mutBoard.sort()
     return (nextPlayer(curPlayer(state)),tuple(mutBoard))
 
 def getActions(state):
@@ -323,15 +321,17 @@ def getActions(state):
                 pieceCoords(board(state)[i + 1]) == moved and
                 pieceOwner(board(state)[i + 1]) != curPlayer(state)):
             north = "c"
-        elif moved[1] <= 8:
+        elif (moved[1] <= 8 and (
+                i >= 8 or
+                pieceCoords(board(state)[i + 1]) != moved)):
             north = "m"
         else:
             north = "x"
         moved = addCoords(pieceCoords(piece),(1,0))
         hit = tryFindPiece(board(state),moved)
-        if hit != None and pieceOwner(hit) != curPlayer(state):
+        if hit != None and pieceOwner(hit[0]) != curPlayer(state):
             east = "c"
-        elif moved[0] <= 8:
+        elif moved[0] <= 8 and hit == None:
             east = "m"
         else:
             east = "x"
@@ -339,15 +339,17 @@ def getActions(state):
         if (i > 1 and pieceCoords(board(state)[i - 1]) == moved and
                 pieceOwner(board(state)[i - 1]) != curPlayer(state)):
             south = "c"
-        elif moved[1] >= 0:
+        elif (moved[1] >= 0 and (
+                i <= 0 or
+                pieceCoords(board(state)[i - 1]) != moved)):
             south = "m"
         else:
             south = "x"
         moved = addCoords(pieceCoords(piece),(-1,0))
         hit = tryFindPiece(board(state),moved)
-        if hit != None and pieceOwner(hit) != curPlayer(state):
+        if hit != None and pieceOwner(hit[0]) != curPlayer(state):
             west = "c"
-        elif moved[0] >= 0:
+        elif moved[0] >= 0 and hit == None:
             west = "m"
         else:
             west = "x"
@@ -375,8 +377,6 @@ def getActions(state):
     return actions
 
 
-
-
 #hardcoded for "1" and "2"
 def won(board):
     players = ["1","2"]
@@ -384,8 +384,41 @@ def won(board):
         if pieceName(piece) == "k":
             players.remove(pieceOwner(piece))
     if players == []:
-        return "tie"
-    elif players == ["1","2"]:
         return ""
+    elif players == ["1","2"]:
+        return "tie"
     else:
-        return switchPlayer(players[0])
+        return nextPlayer(players[0])
+
+def startState():
+    p1_board = [
+        (0,0,0,"t","1"),
+        (1,0,0,"t","1"),
+        (2,0,3,"d","1"),
+        (3,0,0,"b","1"),
+        (4,0,0,"k","1"),
+        (5,0,0,"l","1"),
+        (6,0,0,"t","1"),
+        (7,0,3,"d","1"),
+        (8,0,3,"d","1"),
+        (0,1,3,"t","1"),
+        (1,1,0,"b","1"),
+        (2,1,0,"b","1"),
+        (3,1,0,"b","1"),
+        (4,1,0,"b","1"),
+        (5,1,2,"s","1"),
+        (6,1,0,"b","1"),
+        (7,1,0,"b","1"),
+        (8,1,0,"t","1"),
+    ]
+
+    p2_board = []
+    for piece in p1_board:
+        newOrient = (pieceOrient(piece) + 2) % 4
+        newX = 8 - pieceCoords(piece)[0]
+        newY = 8 - pieceCoords(piece)[1]
+        p2_board.append((newX,newY,newOrient,pieceName(piece),"2"))
+
+    board = p1_board + p2_board
+    board.sort()
+    return ("1",tuple(board))

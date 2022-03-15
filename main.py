@@ -1,6 +1,8 @@
 from copy import deepcopy
 from tracemalloc import start
 from bot import *
+import laserchess as lc
+import lc_bot as lcb
 import tictactoe as ttt
 import reach15 as r15
 from frontiers import *
@@ -101,7 +103,33 @@ def playReach15():
 
 #OPTIONS
 #printMode: "a" for all states, "e" for only end-state, "n" for none
-def bot_battle_laserchess(printMode = "n"):
-    pass
+def botBattleLaserchess(printMode = "n"):
+    state = lc.startState()
+    bot1 = lcb.makeLaserChessBot("1",Queue(),state)
+    bot1.calculate()
+    bot1.calculate()
+    bot2 = lcb.makeLaserChessBot("2",Queue(),state)
+    bot2.calculate()
+    bot2.calculate()
+    for i in range(40):
+        for j in range(1000):
+            bot1.calculate()
+        act = bot1.bestAction()
+        state = lc.performAction(state,act)
+        if lc.won(state[1]):
+            break
 
-playTictactoe()
+        bot2.updateState(state)
+        for j in range(1000):
+            bot2.calculate()
+        act = bot2.bestAction()
+        state = lc.performAction(state,act)
+        if lc.won(state[1]):
+            break
+
+        if i % 5 == 0:
+            print(state)
+    print(state)
+
+
+botBattleLaserchess()
