@@ -111,10 +111,13 @@ def botBattleLaserchess(printMode = "n"):
     bot2 = lcb.makeLaserChessBot("2",Queue(),state)
     bot2.calculate()
     bot2.calculate()
+    lc.printBoard(state)
     for i in range(40):
+        print("ROUND " + str(i+1))
         for _ in range(2000):
             bot1.calculate()
         act = bot1.bestAction()
+        print("Player 1 move: ")
         print(act)
         state = lc.performAction(state,act)
         bot1.updateState(state)
@@ -129,6 +132,7 @@ def botBattleLaserchess(printMode = "n"):
         for _ in range(2000):
             bot2.calculate()
         act = bot2.bestAction()
+        print("Player 2 move: ")
         print(act)
         if act == None:
             print(bot2.tree.state)
@@ -142,8 +146,9 @@ def botBattleLaserchess(printMode = "n"):
         if lc.won(state[1]):
             break
 
-        if i % 5 == 0:
-            print(state)
+        #if i % 5 == 0:
+        print(state)
+        lc.printBoard(state)
     print(state)
 
 
