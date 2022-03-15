@@ -104,6 +104,9 @@ class Agent:
             if not self.stateMap[state] in self.tree.children.values():
                 print("Warning: impossible transition")
             self.tree = self.stateMap[state]
+            #very quick fix, not good
+            if self.frontier.contains(self.tree):
+                self.frontier.prioritize(self.tree)
         else:
             #new state was not considered possible
             print("Warning: moved to state outside stateMap")
