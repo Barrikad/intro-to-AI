@@ -105,7 +105,17 @@ class TestLaserBeam(unittest.TestCase):
         expected = [(king2,board.index(king2)),(block2,board.index(block2))]
         expected.sort()
         self.assertEqual(expected,bh)
-        
+
+    def test_avoid_infinite_loop(self):
+        splitter = (4,2,1,"s","1")
+        laser = (4,0,0,"l","1")
+        block1 = (8,2,3,"b","2")
+        block2 = (4,7,2,"b","2")
+        board = [splitter,laser,block1,block2]
+        board.sort()
+        board = tuple(board)
+        bh = beamHits(board,(4,0),0)
+        self.assertEqual(bh,[(laser,0)])
 
 class TestPerformAction(unittest.TestCase):
     def test_rotate_diagonal(self):

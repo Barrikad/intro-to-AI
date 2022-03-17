@@ -1,5 +1,5 @@
 from bot import Agent
-from laserchess import getActions, performAction, pieceOwner, won, nextPlayer, board, pieceName
+from laserchess import getActions, performAction, pieceCoords, pieceOwner, won, nextPlayer, board, pieceName
 
 def eval_piece(piece_name):
         # king
@@ -10,15 +10,15 @@ def eval_piece(piece_name):
             return 300
         # splitter
         elif piece_name == "s":
-            return 80
+            return 90
         # diagonal mirror
         elif piece_name == "d":
-            return 60
+            return 70
         # block
         elif piece_name == "b":
-            return 50
+            return 60
         # triangular mirror
-        return 30
+        return 40
 
 # problem: agents choose rotation way too often
 # fix: add points for moving upwards
@@ -34,9 +34,15 @@ def evaluator(state, perspective):
         else:
             if pieceOwner(piece) == perspective:
                 score += pscore
+                #hardcoded for standard board:
+                if pieceName(piece) != "l":
+                    if perspective == "1":
+                        score += 8 * pieceCoords(piece)[1]
+                    else:
+                        score += 8 * (8 - pieceCoords(piece)[1])
             else:
                 score -= pscore
-                
+
     if kings == [perspective]:
         return -10000
     elif kings == [nextPlayer(perspective)]:

@@ -241,23 +241,47 @@ def hitResult(piece,beamOrient):
         else:
             return ("c",)
 
-#Could loop forever, but that state should be unreachable
 def beamHits(board,origin,orient):
-    newPosition = addCoords(origin,dirVector(orient))
-    if outOfBounds(newPosition):
-        return []
-    
-    hit = tryFindPiece(board,newPosition)
-    if hit == None:
-        return beamHits(board,newPosition,orient)
+    visited = []
+    hits = []
+    toVisit = [(origin,orient)]
+    while toVisit != []:
+        orig,ornt = toVisit.pop()
+        visited.append((orig,ornt))
+        newPosition = addCoords(orig,dirVector(ornt))
 
-    hr = hitResult(hit[0],orient)
-    if hr[0] == "c":
-        return [hit]
-    elif hr[0] == "r":
-        return beamHits(board,newPosition,hr[1])
-    elif hr[0] == "s":
-        return beamHits(board,newPosition,hr[1]) + beamHits(board,newPosition,hr[2])
+        if outOfBounds(newPosition) or ((newPosition,ornt) in visited):
+            continue
+        
+        hit = tryFindPiece(board,newPosition)
+        if hit == None:
+            toVisit.append((newPosition,ornt))
+        else:
+            hr = hitResult(hit[0],ornt)
+            if hr[0] == "c":
+                hits.append(hit)
+            elif hr[0] == "r":
+                toVisit.append((newPosition,hr[1]))
+            elif hr[0] == "s":
+                toVisit.append((newPosition,hr[1]))
+                toVisit.append((newPosition,hr[2]))
+        
+    return hits
+
+# diagonal1 = (2,2,0,"t","2")
+# diagonal2 = (6,2,3,"t","2")
+# king1 = (4,7,3,"k","2")
+# king2 = (6,6,3,"k","2")
+# block1 = (2,6,2,"b","2")
+# block2 = (4,6,0,"b","2")
+# splitter = (4,2,0,"s","1")
+# board = [diagonal1,diagonal2,king1,king2,block1,block2,splitter]
+# board.sort()
+# board = tuple(board)
+# bh = beamHits(board,(4,5),2)
+# bh.sort()
+# expected = [(king2,board.index(king2)),(block2,board.index(block2))]
+# expected.sort()
 
 #Assumes that the action is valid
 #Checks for this should be made before calling the function
@@ -275,7 +299,10 @@ def performAction(state,action):
         #calculate hit pieces and remove from board
         bh = beamHits(mutBoard,pieceCoords(laser),lorient)
         for p,_ in bh:
-            mutBoard.remove(p)
+            try:
+                mutBoard.remove(p)
+            except ValueError:
+                pass
     elif actionName(action) == "m" or actionName(action) == "c":
         #find piece
         piece, pindex = tryFindPiece(board(state),actionCoords(action))
