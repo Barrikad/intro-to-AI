@@ -3,7 +3,7 @@ from bot import Node
 from util import MAX_INT
 
 V_IV_COEFF = 100
-MAX_VALUE = 1000
+MAX_VALUE = 10000
 
 class Stack:
     def __init__(self):
@@ -145,7 +145,7 @@ class Heap:
         
 
     def evaluate(self,node): #0 must be lowest possible value
-        iv = 0 
+        iv = 11000
         for parent in node.parents: #for each state leading into this one
             if self.ourTurn(parent.state):
                 iv += (node.value // (V_IV_COEFF * node.steps + 1)) #interesting if we can choose a high-value state
