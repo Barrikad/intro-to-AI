@@ -26,5 +26,5 @@ def binarySearch(list,element,bound):
             return None
     return None
         
-#integer to use when you want "largest reasonable number"
-MAX_INT = 99999999 
+#largest reasonable int
+MAX_INT = 99999999

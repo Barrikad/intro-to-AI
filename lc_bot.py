@@ -20,6 +20,7 @@ def eval_piece(piece_name):
         # triangular mirror
         return 40
 
+#TWEAK AREA:
 # problem: agents choose rotation way too often
 # fix: add points for moving upwards
 def evaluator(state, perspective):

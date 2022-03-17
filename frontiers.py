@@ -1,7 +1,7 @@
 from collections import deque
 from bot import Node
-from util import MAX_INT
 
+#TWEAK AREA:
 V_IV_COEFF = 100
 MAX_VALUE = 10000
 
@@ -66,6 +66,7 @@ class Queue:
 #high value states after our actions are interesting because we should search for negative results of seemingly good decisions
 #low value states after opponents turn are interesting because they are more likely to be picked by opponent
 
+
 class Heap:
     def __init__(self,ourTurn):
         self.nodes = [] #contains pairs of (value,node) where first element is interest value
@@ -121,6 +122,8 @@ class Heap:
                     maxc += 1 #use right child if bigger than left
 
     def reevaluate(self,node):
+        if node.heapIndex == None:
+            return
         vnew = self.evaluate(node)
         vold = self.nodes[node.heapIndex][0]
         self.nodes[node.heapIndex] = (vnew,node)
@@ -128,6 +131,10 @@ class Heap:
             self.bubbleUp(node.heapIndex)
         else:
             self.bubbleDown(node.heapIndex)
+    
+    def reset(self,node):
+        if node.heapIndex != None:
+            self.nodes[node.heapIndex] = (0,node)
     
     #REPRIORITAZE NOTES
     #set steps of all nodes in frontier to max
@@ -143,7 +150,7 @@ class Heap:
     #don't remove from frontier, just make step cost extremely high
     
         
-
+    #TWEAK AREA:
     def evaluate(self,node): #0 must be lowest possible value
         iv = 11000
         for parent in node.parents: #for each state leading into this one

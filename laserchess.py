@@ -268,20 +268,6 @@ def beamHits(board,origin,orient):
         
     return hits
 
-# diagonal1 = (2,2,0,"t","2")
-# diagonal2 = (6,2,3,"t","2")
-# king1 = (4,7,3,"k","2")
-# king2 = (6,6,3,"k","2")
-# block1 = (2,6,2,"b","2")
-# block2 = (4,6,0,"b","2")
-# splitter = (4,2,0,"s","1")
-# board = [diagonal1,diagonal2,king1,king2,block1,block2,splitter]
-# board.sort()
-# board = tuple(board)
-# bh = beamHits(board,(4,5),2)
-# bh.sort()
-# expected = [(king2,board.index(king2)),(block2,board.index(block2))]
-# expected.sort()
 
 #Assumes that the action is valid
 #Checks for this should be made before calling the function

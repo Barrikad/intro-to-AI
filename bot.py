@@ -130,15 +130,12 @@ class Agent:
         for state in self.stateMap:
             node = self.stateMap[state]
             node.steps = MAX_INT
-            if node.heapIndex != None:
-                #reaching directly into the frontier, not good
-                self.frontier.nodes[node.heapIndex] = (0,node)
+            self.frontier.reset(node)
         self.setSteps(self.tree,0)
 
     def setSteps(self,node,level):
         node.steps = level
-        if node.heapIndex != None:
-            self.frontier.reevaluate(node)
+        self.frontier.reevaluate(node)
         for act in node.children:
             if node.children[act].steps > level + 1:
                 self.setSteps(node.children[act],level + 1)
