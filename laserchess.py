@@ -322,7 +322,7 @@ def getActions(state):
                 pieceOwner(board(state)[i + 1]) != curPlayer(state)):
             north = "c"
         elif (moved[1] <= 8 and (
-                i >= 8 or
+                i >= len(board(state)) - 1 or
                 pieceCoords(board(state)[i + 1]) != moved)):
             north = "m"
         else:

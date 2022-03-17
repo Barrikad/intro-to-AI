@@ -105,10 +105,10 @@ def playReach15():
 #printMode: "a" for all states, "e" for only end-state, "n" for none
 def botBattleLaserchess(printMode = "n"):
     state = lc.startState()
-    bot1 = lcb.makeLaserChessBot("1",Queue(),state)
+    bot1 = lcb.makeLaserChessBot("1",Heap(lambda state : state[0] == "1"),state)
     bot1.calculate()
     bot1.calculate()
-    bot2 = lcb.makeLaserChessBot("2",Queue(),state)
+    bot2 = lcb.makeLaserChessBot("2",Heap(lambda state : state[0] == "2"),state)
     bot2.calculate()
     bot2.calculate()
     for i in range(40):
@@ -130,8 +130,6 @@ def botBattleLaserchess(printMode = "n"):
             bot2.calculate()
         act = bot2.bestAction()
         print(act)
-        if act == None:
-            print(bot2.tree.state)
         state = lc.performAction(state,act)
         bot1.updateState(state)
         bot1.calculate()

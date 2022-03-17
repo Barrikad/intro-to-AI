@@ -21,6 +21,8 @@
 from collections import deque
 import random
 
+from util import MAX_INT
+
 
 class Node:
     def __init__(self,state,children,parents,value):
@@ -28,6 +30,7 @@ class Node:
         self.children = children #map: action -> Node
         self.parents = parents #Node list
         self.value = value #int
+        self.heapIndex = None
 
 def printNode(node,level):
     print(" " * level + str(node.state))
@@ -47,6 +50,7 @@ class Agent:
         self.frontier = emptyFrontier
         
         self.tree = Node(startState,{},[],evaluator(startState))
+        self.tree.steps = 0 #number of steps from root
         self.stateMap = {startState : self.tree}
         self.frontier.insert(self.tree)
 
@@ -75,9 +79,14 @@ class Agent:
             if actState in self.stateMap:
                 node.children[act] = self.stateMap[actState]
                 self.stateMap[actState].parents.append(node)
+                if self.stateMap[actState].steps > node.steps + 1:
+                    self.stateMap[actState].steps = node.steps + 1
+                    if self.stateMap[actState].heapIndex != None:
+                        self.frontier.reevaluate(self.stateMap[actState])
             else:
                 node.children[act] = Node(
                     actState,{}, [node], self.evaluator(actState))
+                node.children[act].steps = node.steps + 1
                 self.frontier.insert(node.children[act])
                 self.stateMap[actState] = node.children[act]
         
@@ -109,18 +118,30 @@ class Agent:
             if not self.stateMap[state] in self.tree.children.values():
                 print("Warning: impossible transition")
             self.tree = self.stateMap[state]
-            #very quick fix, not good
-            if self.frontier.contains(self.tree):
-                self.frontier.prioritize(self.tree)
         else:
             #new state was not considered possible
             print("Warning: moved to state outside stateMap")
             self.tree = Node(state,{},[],self.evaluator(state))
             self.stateMap[state] = self.tree
             self.frontier.insert(self.tree)
+        self.redoSteps()
+        
+    def redoSteps(self):
+        for state in self.stateMap:
+            node = self.stateMap[state]
+            node.steps = MAX_INT
+            if node.heapIndex != None:
+                #reaching directly into the frontier, not good
+                self.frontier.nodes[node.heapIndex] = (0,node)
+        self.setSteps(self.tree,0)
 
-    def removeUnreachableFrontiers(self):
-        pass
+    def setSteps(self,node,level):
+        node.steps = level
+        if node.heapIndex != None:
+            self.frontier.reevaluate(node)
+        for act in node.children:
+            if node.children[act].steps > level + 1:
+                self.setSteps(node.children[act],level + 1)
 
     def printTree(self):
         printNode(self.tree,0)

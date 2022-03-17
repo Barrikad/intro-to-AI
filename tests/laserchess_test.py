@@ -1,6 +1,6 @@
 import unittest
 
-from laserchess import beamHits, board, getActions, hitResult, mrPiece, performAction, pieceOrient, rotatePiece
+from laserchess import beamHits, board, getActions, hitResult, mrPiece, performAction, pieceOrient, rotatePiece, startState
 
 
 class TestHitResults(unittest.TestCase):
@@ -299,3 +299,9 @@ class TestGetActions(unittest.TestCase):
         actual = getActions(state)
 
         self.assertEqual([],actual)
+
+    def test_start_position(self):
+        state = startState()
+        state = performAction(state,("r",4,0,3))
+        actual = getActions(state)
+        self.assertNotIn(("m",6,7,1,0),actual)

@@ -6,11 +6,11 @@ from laserchess import getActions, performAction, won, nextPlayer
 def evaluator(state,perspective):
     pwon = won(state[1])
     if pwon == perspective:
-        return 100
+        return 1000
     elif pwon == nextPlayer(perspective):
-        return -100
-    else:
         return 0
+    else:
+        return 500
 
 def makeLaserChessBot(botPlayer,frontier,startState):
     ourTurn = lambda state : state[0] == botPlayer
