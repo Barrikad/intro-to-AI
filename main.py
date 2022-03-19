@@ -1,5 +1,6 @@
 from copy import deepcopy
 import queue
+from shutil import move
 from threading import Thread
 import time
 from tracemalloc import start
@@ -184,5 +185,148 @@ def botBattleLaserchess(printMode = "n"):
     bot2.join()
     print("done")
 
+def playerVsBotLaserChess():
+    player = ""
+    while player != "p1" and player != "p2":
+        player = input("Choose player (p1 or p2): ")
+    
+    state = lc.startState()
 
-botBattleLaserchess()
+    lc.printBoard(state)
+    print("Player has move options of fire(f), move(m), capture(c) and rotate(r)")
+    print("")
+    if player == "p1":
+
+        b2in = queue.Queue()
+        b2out = queue.Queue()
+
+        bot2 = botThread(2,"bot2",b2in,b2out,state,"2")
+        bot2.daemon = True
+        bot2.start()
+
+        for i in range(100):
+            print("ROUND " + str(i+1))
+
+            actions = lc.getActions(state)
+            validAction = False
+            while validAction != True:
+                moveType = ""
+                while moveType !="f" and moveType !="m" and moveType !="c" and moveType !="r":
+                    moveType = input("Choose move f m c or r: ")
+                if moveType == "f":
+                    direction = int(input("Choose shot direction: "))
+                    act = (moveType, direction)
+                elif moveType == "m":
+                    piece = input("Choose piece coordinates: ")
+                    direction = int(input("Choose rotation direction: "))
+                    movedirection = input("Choose move direction: ")
+                    act = (moveType, int(piece[0]), int(piece[2]), int(direction), int(movedirection))
+                elif moveType == "c":
+                    piece = input("Choose piece coordinates: ")
+                    direction = int(input("Choose rotation direction: "))
+                    movedirection = input("Choose move direction: ")
+                    act = (moveType, int(piece[0]), int(piece[2]), int(direction), int(movedirection))
+                elif moveType == "r":
+                    piece = input("Choose piece coordinates: ")
+                    direction = int(input("Choose rotation direction: "))
+                    act = (moveType, int(piece[0]), int(piece[2]), int(direction))
+                validAction = act in actions 
+            print("Player 1 move: ")
+            print(act)
+            state = lc.performAction(state,act)
+            b2in.put(("update",state))
+            if lc.won(state[1]):
+                break
+            
+            lc.printBoard(state)
+            time.sleep(4)
+
+            b2in.put(("action",))
+            act = b2out.get()
+            print("Player 2 move: ")
+            print(act)
+            state = lc.performAction(state,act)
+            b2in.put(("update",state))
+            if lc.won(state[1]):
+                break
+
+            lc.printBoard(state)
+
+    elif player == "p2":
+        b1in = queue.Queue()
+        b1out = queue.Queue()
+
+        bot1 = botThread(1,"bot1",b1in,b1out,state,"1")
+        bot1.daemon = True
+        bot1.start()
+        time.sleep(2)
+
+        lc.printBoard(state)
+        for i in range(100):
+            time.sleep(4)
+            print("ROUND " + str(i+1))
+            b1in.put(("action",))
+            act = b1out.get()
+            print("Player 1 move: ")
+            print(act)
+            state = lc.performAction(state,act)
+            b1in.put(("update",state))
+            if lc.won(state[1]):
+                break
+            
+            lc.printBoard(state)
+
+            actions = lc.getActions(state)
+            validAction = False
+            while validAction != True:
+                moveType = ""
+                while moveType !="f" and moveType !="m" and moveType !="c" and moveType !="r":
+                    moveType = input("Choose move f m c or r: ")
+                if moveType == "f":
+                    direction = int(input("Choose shot direction: "))
+                    act = (moveType, direction)
+                elif moveType == "m":
+                    piece = input("Choose piece coordinates: ")
+                    direction = int(input("Choose rotation direction: "))
+                    movedirection = input("Choose move direction: ")
+                    act = (moveType, int(piece[0]), int(piece[2]), int(direction), int(movedirection))
+                elif moveType == "c":
+                    piece = input("Choose piece coordinates: ")
+                    direction = int(input("Choose rotation direction: "))
+                    movedirection = input("Choose move direction: ")
+                    act = (moveType, int(piece[0]), int(piece[2]), int(direction), int(movedirection))
+                elif moveType == "r":
+                    piece = input("Choose piece coordinates: ")
+                    direction = int(input("Choose rotation direction: "))
+                    act = (moveType, int(piece[0]), int(piece[2]), int(direction))
+                validAction = act in actions
+            print("Player 2 move: ")
+            print(act)
+            state = lc.performAction(state,act)
+            b1in.put(("update",state))
+            if lc.won(state[1]):
+                break
+
+            lc.printBoard(state)
+        print(state)
+        if player == "p1":
+            b2in.put(("quit",)) 
+            bot2.join()
+        else:   
+            b1in.put(("quit",))
+            bot1.join()
+        print("done")
+
+def laserChessMain():
+    gameMode = ""
+    while gameMode != "bvb" and gameMode != "pvb":
+        gameMode = input("Choose \"pvb\" for player vs bot or \"bvb\" for bot vs bot: ")
+    if gameMode == "bvb":
+        botBattleLaserchess()
+    elif gameMode == "pvb":
+        playerVsBotLaserChess()
+
+
+#botBattleLaserchess()
+#playerVsBotLaserChess()
+laserChessMain()
