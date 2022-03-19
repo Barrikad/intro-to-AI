@@ -48,6 +48,8 @@ def evaluator(state, perspective):
         return -10000
     elif kings == [nextPlayer(perspective)]:
         return 10000
+    elif kings == [perspective,nextPlayer(perspective)]:
+        return 0
     else:
         return score
 
