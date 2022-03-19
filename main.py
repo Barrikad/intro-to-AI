@@ -150,7 +150,7 @@ def botBattleLaserchess(printMode = "n"):
     time.sleep(2)
 
     lc.printBoard(state)
-    for i in range(40):
+    for i in range(100):
         time.sleep(4)
         print("ROUND " + str(i+1))
         b1in.put(("action",))
