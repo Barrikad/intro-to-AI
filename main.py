@@ -1,4 +1,7 @@
 from copy import deepcopy
+import queue
+from threading import Thread
+import time
 from tracemalloc import start
 from bot import *
 import laserchess as lc
@@ -101,53 +104,85 @@ def playReach15():
     print("Final state:")
     print(endState)
 
+
+class botThread(Thread):
+    def __init__(self, threadID, name, inQueue, outQueue, startState, player):
+        Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.inQueue = inQueue
+        self.outQueue = outQueue
+        self.bot = lcb.makeLaserChessBot(player,Heap(lambda s : s[0] == player),startState)
+
+    def run(self):
+        while True:
+            self.bot.calculate()
+            self.bot.calculate()
+            self.bot.calculate()
+            self.bot.calculate()
+            self.bot.calculate()
+            if not self.inQueue.empty():
+                m = self.inQueue.get()
+                if m[0] == "action":
+                    self.outQueue.put(self.bot.bestAction(playingLaserChess=True))
+                elif m[0] == "update":
+                    self.bot.updateState(m[1])
+                elif m[0] == "quit":
+                    break
+
+
 #OPTIONS
 #printMode: "a" for all states, "e" for only end-state, "n" for none
 def botBattleLaserchess(printMode = "n"):
     state = lc.startState()
-    bot1 = lcb.makeLaserChessBot("1",Heap(lambda state : state[0] == "1"),state)
-    bot1.calculate()
-    bot1.calculate()
-    bot2 = lcb.makeLaserChessBot("2",Heap(lambda state : state[0] == "2"),state)
-    bot2.calculate()
-    bot2.calculate()
+
+    b1in = queue.Queue()
+    b1out = queue.Queue()
+    b2in = queue.Queue()
+    b2out = queue.Queue()
+
+    bot1 = botThread(1,"bot1",b1in,b1out,state,"1")
+    bot2 = botThread(2,"bot2",b2in,b2out,state,"2")
+    bot1.daemon = True
+    bot2.daemon = True
+    bot1.start()
+    bot2.start()
+    time.sleep(2)
+
     lc.printBoard(state)
     for i in range(40):
+        time.sleep(4)
         print("ROUND " + str(i+1))
-        for _ in range(1000):
-            bot1.calculate()
-        act = bot1.bestAction(playingLaserChess=True)
+        b1in.put(("action",))
+        act = b1out.get()
         print("Player 1 move: ")
         print(act)
         state = lc.performAction(state,act)
-        bot1.updateState(state)
-        bot1.calculate()
-        bot1.calculate()
-        bot2.updateState(state)
-        bot2.calculate()
-        bot2.calculate()
+        b1in.put(("update",state))
+        b2in.put(("update",state))
         if lc.won(state[1]):
             break
         
         lc.printBoard(state)
+        time.sleep(4)
 
-        for _ in range(1000):
-            bot2.calculate()
-        act = bot2.bestAction(playingLaserChess=True)
+        b2in.put(("action",))
+        act = b2out.get()
         print("Player 2 move: ")
         print(act)
         state = lc.performAction(state,act)
-        bot1.updateState(state)
-        bot1.calculate()
-        bot1.calculate()
-        bot2.updateState(state)
-        bot2.calculate()
-        bot2.calculate()
+        b1in.put(("update",state))
+        b2in.put(("update",state))
         if lc.won(state[1]):
             break
 
         lc.printBoard(state)
     print(state)
+    b1in.put(("quit",))
+    b2in.put(("quit",))
+    bot1.join()
+    bot2.join()
+    print("done")
 
 
 botBattleLaserchess()
