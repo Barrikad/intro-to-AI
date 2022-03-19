@@ -33,7 +33,13 @@ class Node:
         self.heapIndex = None
 
 def printNode(node,level):
+    try:
+        if node.printed:
+            return
+    except AttributeError:
+        pass
     print(" " * level + str(node.state))
+    node.printed = True
     for act in node.children:
         printNode(node.children[act],level + 1)
 
@@ -80,9 +86,7 @@ class Agent:
                 node.children[act] = self.stateMap[actState]
                 self.stateMap[actState].parents.append(node)
                 if self.stateMap[actState].steps > node.steps + 1:
-                    self.stateMap[actState].steps = node.steps + 1
-                    if self.stateMap[actState].heapIndex != None:
-                        self.frontier.reevaluate(self.stateMap[actState])
+                    self.redoSteps(self.stateMap[actState],node.steps + 1)
             else:
                 node.children[act] = Node(
                     actState,{}, [node], self.evaluator(actState))
@@ -124,21 +128,36 @@ class Agent:
             self.tree = Node(state,{},[],self.evaluator(state))
             self.stateMap[state] = self.tree
             self.frontier.insert(self.tree)
-        self.redoSteps()
+        self.resetSteps()
+        self.redoSteps(self.tree,0)
         
-    def redoSteps(self):
+    def resetSteps(self):
+        #reset steps
         for state in self.stateMap:
             node = self.stateMap[state]
             node.steps = MAX_INT
             self.frontier.reset(node)
-        self.setSteps(self.tree,0)
+            
+    def redoSteps(self,n,l):
+        # print("enter")
+        #bfs to reevaluate steps from level
+        level = l
+        toVisit = set([n])
+        toVisitNext = set([])
 
-    def setSteps(self,node,level):
-        node.steps = level
-        self.frontier.reevaluate(node)
-        for act in node.children:
-            if node.children[act].steps > level + 1:
-                self.setSteps(node.children[act],level + 1)
+        while len(toVisit) != 0:
+            for node in toVisit:
+                node.steps = level
+                if node.heapIndex != None:
+                    self.frontier.reevaluate(node)
+                for act in node.children:
+                    if node.children[act].steps > level + 1:
+                        toVisitNext.add(node.children[act])
+            
+            level += 1
+            toVisit = toVisitNext
+            toVisitNext = set([])
+
 
     def printTree(self):
         printNode(self.tree,0)

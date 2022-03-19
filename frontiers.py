@@ -1,8 +1,8 @@
 from collections import deque
 from bot import Node
+from util import MIN_INT
 
 #TWEAK AREA:
-V_IV_COEFF = 100
 MAX_VALUE = 10000
 
 class Stack:
@@ -93,7 +93,7 @@ class Heap:
         return head[1] #return just node and not value
     
     def bubbleUp(self,i):
-        p = (i - 1) // 2 #parent index
+        p = i // 2 #parent index
         while i > 0 and self.nodes[i][0] > self.nodes[p][0]:
             temp = self.nodes[p]
             self.nodes[p] = self.nodes[i]
@@ -101,7 +101,7 @@ class Heap:
             self.nodes[i][1].heapIndex = i
             self.nodes[p][1].heapIndex = p
             i = p
-            p = (i - 1) // 2
+            p = i // 2
 
     def bubbleDown(self,i):
         maxc = i #use self to quit loop if no child exists
@@ -134,7 +134,8 @@ class Heap:
     
     def reset(self,node):
         if node.heapIndex != None:
-            self.nodes[node.heapIndex] = (0,node)
+            self.nodes[node.heapIndex] = (MIN_INT,node)
+            self.bubbleDown(node.heapIndex)
     
     #REPRIORITAZE NOTES
     #set steps of all nodes in frontier to max
@@ -151,13 +152,15 @@ class Heap:
     
         
     #TWEAK AREA:
-    def evaluate(self,node): #0 must be lowest possible value
-        iv = 11000
+    def evaluate(self,node):
+        iv = 0
+
+        iv -= 1000 * node.steps
         for parent in node.parents: #for each state leading into this one
             if self.ourTurn(parent.state):
-                iv += (node.value // (V_IV_COEFF * node.steps + 1)) #interesting if we can choose a high-value state
+                iv += node.value #interesting if we can choose a high-value state
             else:
-                iv += ((MAX_VALUE - node.value) // (V_IV_COEFF * node.steps + 1)) #interesting if opponent can choose low-value state
+                iv += -node.value #interesting if opponent can choose low-value state
         return iv
 
 #0 1 2 3 4 5 6

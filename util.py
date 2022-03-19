@@ -28,3 +28,5 @@ def binarySearch(list,element,bound):
         
 #largest reasonable int
 MAX_INT = 99999999
+
+MIN_INT = -99999999
