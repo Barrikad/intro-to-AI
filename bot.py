@@ -101,7 +101,7 @@ class Agent:
             node = self.frontier.extract()
             self.expandNode(node)
 
-    def bestAction(self):
+    def bestAction(self,playingLaserChess = False):
         if not self.ourTurn(self.tree.state):
             return None
         else:
@@ -115,6 +115,13 @@ class Agent:
                     bestActs.append(act)
             if bestActs == []:
                 return None
+            if playingLaserChess: #don't rotate if not necessary
+                bestActsNoRot = []
+                for act in bestActs:
+                    if act[0] != "r":
+                        bestActsNoRot.append(act)
+                if bestActsNoRot != []:
+                    return random.choice(bestActsNoRot)
             return random.choice(bestActs)
 
     def updateState(self,state):

@@ -116,7 +116,7 @@ def botBattleLaserchess(printMode = "n"):
         print("ROUND " + str(i+1))
         for _ in range(1000):
             bot1.calculate()
-        act = bot1.bestAction()
+        act = bot1.bestAction(playingLaserChess=True)
         print("Player 1 move: ")
         print(act)
         state = lc.performAction(state,act)
@@ -133,7 +133,7 @@ def botBattleLaserchess(printMode = "n"):
 
         for _ in range(1000):
             bot2.calculate()
-        act = bot2.bestAction()
+        act = bot2.bestAction(playingLaserChess=True)
         print("Player 2 move: ")
         print(act)
         state = lc.performAction(state,act)
@@ -149,27 +149,5 @@ def botBattleLaserchess(printMode = "n"):
         lc.printBoard(state)
     print(state)
 
-king1 = (0,0,0,"k","2")
-king2 = (4,4,0,"k","1")
-laser = (4,0,3,"l","2")
-board = [king1,king2,laser]
-board.sort()
-board = tuple(board)
-state = ("1",board)
-bot1 = lcb.makeLaserChessBot("1",Heap(lambda state : state[0] == "1"),state)
-for i in range(2000):
-    bot1.calculate()
-# for i in range(100):
-#     print(bot1.frontier.nodes[i])
 
-act = bot1.bestAction()
-print(act)
-print(bot1.tree.children[act].value)
-
-state = lc.performAction(state,act)
-bot1.updateState(state)
-for i in range(2000):
-    bot1.calculate()
-
-print(bot1.tree.state[1])
-print(bot1.tree.value)
+botBattleLaserchess()

@@ -154,9 +154,10 @@ class Heap:
     #TWEAK AREA:
     def evaluate(self,node):
         iv = 0
-
-        iv -= 1000 * node.steps
+        iv -= 3000 * node.steps
         for parent in node.parents: #for each state leading into this one
+            #add interest for close parents
+            iv += max(0,1000 - parent.steps*150)
             if self.ourTurn(parent.state):
                 iv += node.value #interesting if we can choose a high-value state
             else:
