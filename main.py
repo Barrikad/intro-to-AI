@@ -193,8 +193,9 @@ def playerVsBotLaserChess():
     state = lc.startState()
 
     lc.printBoard(state)
-    print("Player has move options of fire(f), move(m), capture(c) and rotate(r)")
-    print("")
+    print("Player has move options of fire(f), move(m), capture(c) and rotate(r).")
+    print("The coordinates of the board goes from 0 to 8 in each direction. \nThey should be input like \"0 1\" The first being the column and the second being the row.")
+    print("The directions options are North(0), East(1), South(2) and West(3).")
     if player == "p1":
 
         b2in = queue.Queue()
