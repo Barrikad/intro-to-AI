@@ -30,7 +30,6 @@ class Node:
         self.children = children #map: action -> Node
         self.parents = parents #Node list
         self.value = value #int
-        self.heapIndex = None
 
 def printNode(node,level):
     try:
@@ -53,7 +52,7 @@ class Agent:
         self.getActions = getActions #fun: state -> action list
         self.simulator = simulator #fun: state -> action -> state
         self.evaluator = evaluator #fun: state -> int
-        self.frontier = emptyFrontier
+        self.frontier = emptyFrontier 
         
         self.tree = Node(startState,{},[],evaluator(startState))
         self.tree.steps = 0 #number of steps from root
@@ -66,20 +65,27 @@ class Agent:
         while nodes:
             curNode = nodes.pop()
             valueChild = None
+            #find child that should dominate parents value
             for act in curNode.children:
                 childValue = curNode.children[act].value
                 if (valueChild == None
                         or (self.ourTurn(curNode.state) and valueChild < childValue) 
                         or (not self.ourTurn(curNode.state) and valueChild > childValue)):
                     valueChild = childValue
+            #change value if necessary
             if valueChild and curNode.value != valueChild:
                 curNode.value = valueChild
+                #parent might also need changed value
                 for parent in curNode.parents:
                     nodes.append(parent)
+                    #siblings in frontier might need to be reordered
+                    for act in parent.children:
+                        if self.frontier.contains(parent.children[act]):
+                            self.frontier.reevaluate(parent.children[act])
+
 
     def expandNode(self,node):
         possibleActions = self.getActions(node.state)
-
         for act in possibleActions:
             actState = self.simulator(node.state,act)
             if actState in self.stateMap:
@@ -143,10 +149,10 @@ class Agent:
         for state in self.stateMap:
             node = self.stateMap[state]
             node.steps = MAX_INT
-            self.frontier.reset(node)
+            if self.frontier.contains(node):
+                self.frontier.reset(node)
             
     def redoSteps(self,n,l):
-        # print("enter")
         #bfs to reevaluate steps from level
         level = l
         toVisit = set([n])
@@ -155,7 +161,7 @@ class Agent:
         while len(toVisit) != 0:
             for node in toVisit:
                 node.steps = level
-                if node.heapIndex != None:
+                if self.frontier.contains(node):
                     self.frontier.reevaluate(node)
                 for act in node.children:
                     if node.children[act].steps > level + 1:

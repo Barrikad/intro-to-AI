@@ -36,7 +36,7 @@ def evaluator(state, perspective):
             if pieceOwner(piece) == perspective:
                 score += pscore
                 #hardcoded for standard board:
-                if pieceName(piece) != "l" and pieceName(piece) != "k":
+                if pieceName(piece) == "b":
                     if perspective == "1":
                         score += 14 * pieceCoords(piece)[1]
                     else:

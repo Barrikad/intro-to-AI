@@ -115,11 +115,13 @@ class TestMockNodes(unittest.TestCase):
         for state in stateMap:
             node = stateMap[state]
             node.steps = MAX_INT
-            self.frontier.reset(node)
+            if self.frontier.contains(node):
+                self.frontier.reset(node)
 
         for i in stateMap:
             stateMap[i].steps = random.randint(0,1000)
-            self.frontier.reevaluate(stateMap[i])
+            if self.frontier.contains(stateMap[i]):
+                self.frontier.reevaluate(stateMap[i])
 
         for i in range(len(self.frontier.nodes)):
             self.assertGreaterEqual(self.frontier.nodes[0][0],self.frontier.nodes[i][0])

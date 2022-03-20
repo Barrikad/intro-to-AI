@@ -64,31 +64,31 @@ class TestScenarios(unittest.TestCase):
         board = tuple(board)
         state = ("1",board)
         bot1 = lcb.makeLaserChessBot("1",Heap(lambda state : state[0] == "1"),state)
-        for i in range(500):
+        for i in range(200):
             bot1.calculate()
         state = lc.performAction(state,("m",7,4,0,3))
         bot1.updateState(state)
-        for i in range(500):
+        for i in range(200):
             bot1.calculate()
         state = lc.performAction(state,rot1)
         bot1.updateState(state)
-        for i in range(500):
+        for i in range(200):
             bot1.calculate()
         state = lc.performAction(state,("m",6,4,0,3))
         bot1.updateState(state)
-        for i in range(500):
+        for i in range(200):
             bot1.calculate()
         state = lc.performAction(state,rot2)
         bot1.updateState(state)
-        for i in range(500):
+        for i in range(200):
             bot1.calculate()
         state = lc.performAction(state,("m",5,4,0,3))
         bot1.updateState(state)
-        for i in range(500):
+        for i in range(200):
             bot1.calculate()
         state = lc.performAction(state,rot1)
         bot1.updateState(state)
-        for i in range(500):
+        for i in range(200):
             bot1.calculate()
         for i in range(2000):
             bot1.calculate()
@@ -110,7 +110,7 @@ class TestScenarios(unittest.TestCase):
         board = tuple(board)
         state = ("1",board)
         bot1 = lcb.makeLaserChessBot("1",Heap(lambda state : state[0] == "1"),state)
-        for i in range(10000): #if you give too much power here it might cause to bot to pick a later mate
+        for i in range(3000): #if you give too much power here it might cause to bot to pick a later mate
             bot1.calculate()
         act = bot1.bestAction()
         self.assertEqual(("r",8,0),(act[0],act[1],act[2]))
@@ -128,7 +128,7 @@ class TestScenarios(unittest.TestCase):
         bot2 = lcb.makeLaserChessBot("2",Heap(lambda state : state[0] == "2"),state)
         bot2.calculate()
         bot2.calculate()
-        for i in range(10000): #if you give too much power here it might cause the bot to pick a later mate
+        for i in range(4000): #if you give too much power here it might cause the bot to pick a later mate
             bot1.calculate()
         act = bot1.bestAction()
         state = lc.performAction(state,act)

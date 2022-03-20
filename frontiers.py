@@ -5,6 +5,7 @@ from util import MIN_INT
 #TWEAK AREA:
 MAX_VALUE = 10000
 
+#very inefficient with regards to state change
 class Stack:
     def __init__(self):
         self.nodes = deque()
@@ -21,11 +22,15 @@ class Stack:
     def contains(self,node):
         return node in self.nodes
 
-    def reprioritize(self,newRoot):
-        if newRoot in self.nodes:
-            self.nodes.remove(newRoot)
-            self.nodes.append(newRoot)
+    def reevaluate(self,node):
+        self.nodes.remove(node)
+        self.nodes.append(node)
+    
+    def reset(self,node):
+        self.nodes.remove(node)
+        self.nodes.appendleft(node)
 
+#very inefficient with regards to state change
 class Queue:
     def __init__(self):
         self.nodes = deque()
@@ -41,11 +46,14 @@ class Queue:
     
     def contains(self,node):
         return node in self.nodes
-        
-    def reprioritize(self,newRoot):
-        if newRoot in self.nodes:
-            self.nodes.remove(newRoot)
-            self.nodes.appendleft(newRoot)
+    
+    def reevaluate(self,node):
+        self.nodes.remove(node)
+        self.nodes.appendleft(node)
+    
+    def reset(self,node):
+        self.nodes.remove(node)
+        self.nodes.append(node)
 
 #Scheme for heap frontier
 #each node in the frontier will be given a value based on how interesting they are to expand
@@ -58,7 +66,7 @@ class Queue:
 #it would then have to be reprioritized in the frontiers
 
 #reprioritation is something we should anticipate actually, since it kinda is the point of max heap
-#make reprioritation easy be storing heap index in node :)
+#make reprioritation easy by storing heap index in node :)
 
 #thoughts on interest value
 #nodes close to root are interesting as they are more likely to be relevant
@@ -66,6 +74,7 @@ class Queue:
 #high value states after our actions are interesting because we should search for negative results of seemingly good decisions
 #low value states after opponents turn are interesting because they are more likely to be picked by opponent
 
+#we assume that all nodes pass through the frontier, and therefore get a heapIndex
 
 class Heap:
     def __init__(self,ourTurn):
@@ -78,7 +87,7 @@ class Heap:
     def insert(self,node):
         v = self.evaluate(node)
         self.nodes.append((v,node))
-        self.nodes[len(self.nodes) - 1][1].heapIndex = len(self.nodes) - 1
+        self.nodes[len(self.nodes) - 1][1].heapIndex = len(self.nodes) - 1 #we give nodes a heapIndex when they are inserted
         self.bubbleUp(len(self.nodes) - 1)
     
     def extract(self):
@@ -121,9 +130,10 @@ class Heap:
                 if maxc + 1 < len(self.nodes) and self.nodes[maxc + 1][0] > self.nodes[maxc][0]:
                     maxc += 1 #use right child if bigger than left
 
+    def contains(self,node):
+        return node.heapIndex != None
+
     def reevaluate(self,node):
-        if node.heapIndex == None:
-            return
         vnew = self.evaluate(node)
         vold = self.nodes[node.heapIndex][0]
         self.nodes[node.heapIndex] = (vnew,node)
@@ -133,9 +143,8 @@ class Heap:
             self.bubbleDown(node.heapIndex)
     
     def reset(self,node):
-        if node.heapIndex != None:
-            self.nodes[node.heapIndex] = (MIN_INT,node)
-            self.bubbleDown(node.heapIndex)
+        self.nodes[node.heapIndex] = (MIN_INT,node)
+        self.bubbleDown(node.heapIndex)
     
     #REPRIORITAZE NOTES
     #set steps of all nodes in frontier to max
@@ -154,14 +163,15 @@ class Heap:
     #TWEAK AREA:
     def evaluate(self,node):
         iv = 0
-        iv -= 3000 * node.steps
+        iv -= 5000 * node.steps #we have to punish steps quite harshly since so much value is added by many parents with many children
         for parent in node.parents: #for each state leading into this one
             #add interest for close parents
             iv += max(0,1000 - parent.steps*150)
-            if self.ourTurn(parent.state):
-                iv += node.value #interesting if we can choose a high-value state
-            else:
-                iv += -node.value #interesting if opponent can choose low-value state
+            for act in parent.children:
+                if self.ourTurn(parent.state):
+                    iv += (node.value - parent.children[act].value) #interesting if we can choose a high-value state
+                else:
+                    iv += (parent.children[act].value - node.value) #interesting if opponent can choose low-value state
         return iv
 
 #0 1 2 3 4 5 6
