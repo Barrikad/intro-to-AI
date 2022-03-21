@@ -58,6 +58,7 @@
 # then second and third element is position of chosen piece
 # fourth element is new orientation of chosen piece
 
+# (4 * 81 * 4 * 80) + (4 * 81 * 4 * 80 * 4 * 79)
 #move piece at 3,4 to 3,5 and change orientation to south:
 #("m",3,4,2,0)
 
@@ -202,7 +203,6 @@ def hitResult(piece,beamOrient):
     #defines which side the piece is hit from
     #0=back, 1=left, 2=front, 3=right
     #there is probably an easier way to calculate this
-    hitSide = (pieceOrient(piece) - beamOrient) % 4
     if pieceOrient(piece) == beamOrient:
         hitSide = 0
     elif (pieceOrient(piece) + 1) % 4 == beamOrient:

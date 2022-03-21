@@ -152,7 +152,7 @@ def botBattleLaserchess(printMode = "n"):
 
     lc.printBoard(state)
     for i in range(100):
-        time.sleep(4)
+        #time.sleep(4)
         print("ROUND " + str(i+1))
         b1in.put(("action",))
         act = b1out.get()
@@ -165,7 +165,7 @@ def botBattleLaserchess(printMode = "n"):
             break
         
         lc.printBoard(state)
-        time.sleep(4)
+        #time.sleep(4)
 
         b2in.put(("action",))
         act = b2out.get()
@@ -239,7 +239,7 @@ def playerVsBotLaserChess():
                 break
             
             lc.printBoard(state)
-            time.sleep(4)
+            #time.sleep(4)
 
             b2in.put(("action",))
             act = b2out.get()
@@ -263,7 +263,7 @@ def playerVsBotLaserChess():
 
         lc.printBoard(state)
         for i in range(100):
-            time.sleep(4)
+            #time.sleep(4)
             print("ROUND " + str(i+1))
             b1in.put(("action",))
             act = b1out.get()

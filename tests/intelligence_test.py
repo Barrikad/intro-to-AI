@@ -113,7 +113,7 @@ class TestScenarios(unittest.TestCase):
         for i in range(3000): #if you give too much power here it might cause to bot to pick a later mate
             bot1.calculate()
         act = bot1.bestAction()
-        self.assertEqual(("r",8,0),(act[0],act[1],act[2]))
+        self.assertEqual(("r",8,0,3),(act[0],act[1],act[2],act[3]))
     
     def test_mate_in_2_by_capture(self):
         king1 = (0,2,0,"k","1")
@@ -145,3 +145,22 @@ class TestScenarios(unittest.TestCase):
             bot1.calculate()
         act = bot1.bestAction()
         self.assertEqual("c",act[0])
+
+    # def test_mate_in_3_by_sacrifice(self):
+    #     king1 = (0,1,0,"k","1")
+    #     king2 = (8,8,0,"k","2")
+    #     block1 = (8,6,0,"b","1")
+    #     block2 = (8,5,0,"b","1")
+    #     laser = (0,1,3,"l","1")
+    #     splitter = (7,1,3,"s","1")
+    #     mirror1 = (8,0,3,"t","1")
+    #     mirror2 = (7,0,0,"t","1")
+    #     board = [king1,king2,laser,splitter,mirror1,mirror2,block1,block2]
+    #     board.sort()
+    #     board = tuple(board)
+    #     state = ("1",board)
+    #     bot1 = lcb.makeLaserChessBot("1",Heap(lambda state : state[0] == "1"),state)
+    #     for i in range(20000): #if you give too much power here it might cause to bot to pick a later mate
+    #         bot1.calculate()
+    #     act = bot1.bestAction()
+    #     self.assertEqual("f",act)

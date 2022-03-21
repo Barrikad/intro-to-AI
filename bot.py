@@ -86,18 +86,27 @@ class Agent:
 
     def expandNode(self,node):
         possibleActions = self.getActions(node.state)
+        #for all actions possible from node
         for act in possibleActions:
             actState = self.simulator(node.state,act)
+            #if state has already been considered
             if actState in self.stateMap:
+                #add node as child
                 node.children[act] = self.stateMap[actState]
+                #make node parent
                 self.stateMap[actState].parents.append(node)
+                #if this decreases steps, reevaluate frontier
                 if self.stateMap[actState].steps > node.steps + 1:
                     self.redoSteps(self.stateMap[actState],node.steps + 1)
             else:
+                #make new node
                 node.children[act] = Node(
                     actState,{}, [node], self.evaluator(actState))
+                #set child steps to one more than current steps
                 node.children[act].steps = node.steps + 1
+                #add child to frontier
                 self.frontier.insert(node.children[act])
+                #add child to statemap
                 self.stateMap[actState] = node.children[act]
         
         self.updateBranchValue(node)
