@@ -5,8 +5,6 @@ import time
 from bot import *
 import laserchess as lc
 import lc_bot as lcb
-import tictactoe as ttt
-import reach15 as r15
 from frontiers import *
 import alternative_bots as ab
 import matplotlib.pyplot as plt
@@ -42,70 +40,6 @@ def playGame(
         bot.updateState(curState)
         actions = getActions(curState)
     return curState
-    
-def tictactoeParser():
-    c1c2 = input("Input space-separated coordinate: ")
-    c1c2 = c1c2.split()
-    c1 = int(c1c2[0])
-    c2 = int(c1c2[1])
-    return (c1,c2)
-
-def reach15Parser():
-    c = input("Input the number to add: ")
-    return int(c)
-
-def playTictactoe():
-    player = ""
-    while player != "p1" and player != "p2":
-        player = input("Choose player (p1 or p2): ")
-
-    board = []
-    for i in range(3):
-        board.append([""]*3)
-    startState = ttt.State("p1",board)
-
-    bot = ttt.makeTicTacToeBot(ttt.switchPlayer(player),Queue(),startState)
-
-    getPlayer = lambda state : state.player
-
-    print("Board coordinates go from 0 0 to 2 2")
-    print("0 0 is top left corner")
-    print("In x y, x is horizontal position and y vertical position")
-    endState = playGame(
-        bot,ttt.switchPlayer(player),startState,ttt.getActions,
-        ttt.performAction,ttt.statePrinter,tictactoeParser,getPlayer
-    )
-    print("Game over")
-    print("Final state:")
-    ttt.statePrinter(endState)
-    won = ttt.won(endState.board) 
-    if won:
-        print("Congratulations to our winner: " + won)
-    else:
-        print("Game tied!")
-
-def playReach15():
-    player = ""
-    while player != "p1" and player != "p2":
-        player = input("Choose player (p1 or p2): ")
-
-    startState = ("p1",1)
-
-    bot = r15.makeReach15Bot(r15.switchPlayer(player),Queue())
-
-    getPlayer = lambda state : state[0]
-
-    print("Counter goes from 1 to 15")
-    print("Add 1, 2, or 3 to counter in each turn")
-    print("The player to get the counter to 15 wins")
-    endState = playGame(
-        bot,r15.switchPlayer(player),startState,r15.getActions,
-        r15.performAction,print,reach15Parser,getPlayer
-    )
-    print("Game over")
-    print("Final state:")
-    print(endState)
-
 
 class botThread(Thread):
     def __init__(self, threadID, name, inQueue, outQueue, startState, player):
@@ -364,6 +298,4 @@ def laserChessMain():
         playerVsBotLaserChess()
 
 
-#botBattleLaserchess()
-#playerVsBotLaserChess()
 laserChessMain()
