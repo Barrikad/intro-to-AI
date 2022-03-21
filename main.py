@@ -42,20 +42,19 @@ def playGame(
     return curState
 
 class botThread(Thread):
-    def __init__(self, threadID, name, inQueue, outQueue, startState, player):
+    def __init__(self, threadID, name, inQueue, outQueue, startState, player, botType = "minimax"):
         Thread.__init__(self)
         self.threadID = threadID
         self.name = name
         self.inQueue = inQueue
         self.outQueue = outQueue
-        self.bot = lcb.makeLaserChessBot(player,Heap(lambda s : s[0] == player),startState)
+        if botType == "minimax":
+            self.bot = lcb.makeLaserChessBot(player,Heap(lambda s : s[0] == player),startState)
+        elif botType == "montecarlo":
+            self.bot = ab.makeLaserChessMCBot(startState)
 
     def run(self):
         while True:
-            self.bot.calculate()
-            self.bot.calculate()
-            self.bot.calculate()
-            self.bot.calculate()
             self.bot.calculate()
             if not self.inQueue.empty():
                 m = self.inQueue.get()
@@ -86,7 +85,7 @@ def display(fig, ax, pieces, beams, time):
     plt.pause(time)
     ax.clear()
 
-def botBattleLaserchess(pyPlot = False):
+def botBattleLaserchess(pyPlot = False,monteCarlo = False):
     state = lc.startState()
 
     b1in = queue.Queue()
@@ -94,7 +93,10 @@ def botBattleLaserchess(pyPlot = False):
     b2in = queue.Queue()
     b2out = queue.Queue()
 
-    bot1 = botThread(1,"bot1",b1in,b1out,state,"1")
+    if monteCarlo:
+        bot1 = botThread(1,"bot1",b1in,b1out,state,"1",botType="montecarlo")
+    else:
+        bot1 = botThread(1,"bot1",b1in,b1out,state,"1")
     bot2 = botThread(2,"bot2",b2in,b2out,state,"2")
     bot1.daemon = True
     bot2.daemon = True
@@ -290,10 +292,17 @@ def laserChessMain():
         gameMode = input("Choose \"pvb\" for player vs bot or \"bvb\" for bot vs bot: ")
     if gameMode == "bvb":
         pyplot = input("Do you want pyplot visualization? [y/N] ")
+        montecarlo = input("Do you want bot1 to be monte carlo? [y/N] ")
         if pyplot[0].lower() == "y":
-            botBattleLaserchess(True)
+            pyplot = True
         else:
-            botBattleLaserchess()
+            pyplot = False
+        if montecarlo[0].lower() == "y":
+            montecarlo = True
+        else:
+            montecarlo = False
+        botBattleLaserchess(pyPlot=pyplot,monteCarlo=montecarlo)
+            
     elif gameMode == "pvb":
         playerVsBotLaserChess()
 

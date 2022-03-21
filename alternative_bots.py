@@ -5,6 +5,7 @@ import frontiers
 from util import MIN_INT
 import random
 import laserchess as lc
+import math
 
 #heap with lower punishment for steps
 class Heap2(frontiers.Heap):
@@ -17,8 +18,12 @@ class Heap2(frontiers.Heap):
 
 #ucb
 def ucb(node):
-    winRatio = node.wins / node.plays
-    exploration = sqrt(2 * log(node.parent.plays) / node.plays)
+    if not node.parent:
+        parentPlays = node.plays
+    else:
+        parentPlays = node.parent.plays
+    winRatio = (node.plays - node.wins) / node.plays 
+    exploration = math.sqrt(2*math.log(parentPlays) / node.plays)
     return winRatio + exploration
 
 def deleteTree(node):
@@ -61,12 +66,14 @@ class MCBot():
             maxUCB = MIN_INT
             noneChildren = False
             for child in node.children:
-                if node.children[child] == None:
+                if not node.children[child]:
                     noneChildren = True
-                elif node.children[child].ucb > maxUCB:
-                    maxChild = node.children[child]
-                    maxUCB = node.children[child].ucb
-            if not maxChild or (noneChildren and maxUCB <= node.ucb):
+                else:
+                    childUCB = ucb(node.children[child])
+                    if childUCB > maxUCB:
+                        maxChild = node.children[child]
+                        maxUCB = childUCB
+            if not maxChild or (noneChildren and maxUCB <= ucb(node)):
                 break
             else:
                 node = maxChild
@@ -93,7 +100,7 @@ class MCBot():
         pickRot += 0.2 #reduce chance that rotation is picked by 20%
         pickRot = max(pickRot,1)
         rotRatio = len(rotationExpansions)/(len(rotationExpansions) + len(otherExpansions))
-        if pickRot <= rotRatio: #if there are only rots this will always be true
+        if pickRot <= rotRatio or not otherExpansions: #if there are only rots this will always be true
             act = random.choice(rotationExpansions)
         else:
             act = random.choice(otherExpansions)
@@ -105,11 +112,9 @@ class MCBot():
     def rollout(self,node):
         state = node.state
         for _ in range(self.rolloutLimit):
-            w = self.won(state)  
-            if w:
-                return w
-
             acts = self.getActions(state)
+            if not acts:
+                break
             rotationExpansions = []
             otherExpansions = []
             #get actions preferably not rotation
@@ -124,12 +129,15 @@ class MCBot():
             pickRot += 0.2 #reduce chance that rotation is picked by 20%
             pickRot = max(pickRot,1)
             rotRatio = len(rotationExpansions)/(len(rotationExpansions) + len(otherExpansions))
-            if pickRot <= rotRatio: #if there are only rots this will always be true
+            if pickRot <= rotRatio or not otherExpansions:
                 act = random.choice(rotationExpansions)
             else:
                 act = random.choice(otherExpansions)
             
             state = self.simulator(state,act)
+        w = self.won(state[1])  
+        if w:
+            return w
         return "tie"
 
     def backPropogate(self,node,result):
@@ -139,10 +147,9 @@ class MCBot():
             elif result == lc.curPlayer(node.state):
                 node.wins += 1
             node.plays += 1
-            node.ucb = ucb(node)
             node = node.parent
 
-    def calculation(self):
+    def calculate(self):
         node = self.select()
         self.expand(node)
 
@@ -164,7 +171,7 @@ class MCBot():
         self.tree = node
         self.tree.parent = None
     
-    def bestAction(self):
+    def bestAction(self,playingLaserchess = True):
         maxAct = None
         maxPlays = 0
         for act in self.tree.children:
@@ -175,8 +182,24 @@ class MCBot():
         return maxAct
 
 def makeLaserChessMCBot(startState):
-    bot = MCBot(lc.won,lc.getActions,lc.performAction,startState,20000)
+    bot = MCBot(lc.won,lc.getActions,lc.performAction,startState,100000)
     return bot
 
 
 #------------------------------------------------
+# king1 = (4,4,0,"k","1")
+# king2 = (4,5,0,"k","2")
+# board = [king1,king2]
+# board.sort()
+# board = tuple(board)
+# state = ("1",board)
+# bot1 = makeLaserChessMCBot(state)
+# for i in range(5000):
+#     bot1.calculate()
+# for act in bot1.tree.children:
+#     print(act)
+#     if bot1.tree.children[act]:
+#         print(bot1.tree.children[act].wins)
+#         print(bot1.tree.children[act].plays)
+#     else:
+#         print("NONE")
