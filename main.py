@@ -8,6 +8,7 @@ import lc_bot as lcb
 import tictactoe as ttt
 import reach15 as r15
 from frontiers import *
+import alternative_bots as ab
 import matplotlib.pyplot as plt
 import numpy as np
 

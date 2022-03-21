@@ -1,6 +1,10 @@
 from cmath import log, sqrt
+from collections import deque
 import bot 
 import frontiers
+from util import MIN_INT
+import random
+import laserchess as lc
 
 #heap with lower punishment for steps
 class Heap2(frontiers.Heap):
@@ -9,46 +13,170 @@ class Heap2(frontiers.Heap):
         iv += 1000 * node.steps
         return iv
 
+#MONTE CARLO BOT-------------------------------
+
+#ucb
+def ucb(node):
+    winRatio = node.wins / node.plays
+    exploration = sqrt(2 * log(node.parent.plays) / node.plays)
+    return winRatio + exploration
+
+def deleteTree(node):
+    toDelete = deque()
+    toDelete.append(node)
+    while toDelete:
+        node = toDelete.popleft()
+        for act in node.children:
+            if node.children[act]:
+                toDelete.append(node.children[act])
+        del node
+
 class MCNode:
-    def __init__(self,state,children,parents):
+    def __init__(self,state,parent):
         self.state = state
-        self.children = children
-        self.parents = parents
+        self.children = {}
+        self.parent = parent
         self.plays = 0
         self.wins = 0
-
-#monte carlo frontier
-class MCHeap(frontiers.Heap):
-    def evaluate(self, node):
-        ucb = 0
-        winRatio = node.wins / node.plays
-        #calculate average UCB based on the different parents
-        for parent in node.parents:
-            exploration = sqrt(2 * log(parent.plays) / node.plays)
-            ucb += winRatio + exploration
-        ucb /= len(node.parents)
-        return ucb
+        self.ucb = 0
 
 #monte carlo bot
 class MCBot():
     def __init__(
             self,
-            won,getActions,simulator,ourTurn,
+            won,getActions,simulator,
             startState,
             rolloutLimit):
-        self.ourTurn = ourTurn
         self.getActions = getActions #fun: state -> action list
         self.simulator = simulator #fun: state -> action -> state
         self.won = won #won should give None if nonterminal, 0 for loss, 0.5 for tie, and 1 for win
-        self.frontier = MCHeap(ourTurn) #this has to be MCHeap for the algorithm to work
         self.rolloutLimit = rolloutLimit
         
-        self.tree = MCNode(startState,{},[])
-        self.stateMap = {startState : self.tree}
-        self.frontier.insert(self.tree)
+        self.tree = MCNode(startState,None)
+    
+    def select(self):
+        node = self.tree
+        while True:
+            maxChild = None
+            maxUCB = MIN_INT
+            noneChildren = False
+            for child in node.children:
+                if node.children[child] == None:
+                    noneChildren = True
+                elif node.children[child].ucb > maxUCB:
+                    maxChild = node.children[child]
+                    maxUCB = node.children[child].ucb
+            if not maxChild or (noneChildren and maxUCB <= node.ucb):
+                break
+            else:
+                node = maxChild
+        return node
+                
+    def expand(self,node):
+        if not node.children:
+            for act in self.getActions(node.state):
+                node.children[act] = None
+        rotationExpansions = []
+        otherExpansions = []
+        for act in node.children:
+            if not node.children[act]:
+                if act[0] == "r":
+                    rotationExpansions.append(act)
+                else:
+                    otherExpansions.append(act)
+        if rotationExpansions == [] and otherExpansions == []:
+            result = self.rollout(node)
+            self.backPropogate(node,result)
+            return
+        
+        pickRot = random.random() #random number between 0 and 1
+        pickRot += 0.2 #reduce chance that rotation is picked by 20%
+        pickRot = max(pickRot,1)
+        rotRatio = len(rotationExpansions)/(len(rotationExpansions) + len(otherExpansions))
+        if pickRot <= rotRatio: #if there are only rots this will always be true
+            act = random.choice(rotationExpansions)
+        else:
+            act = random.choice(otherExpansions)
+        node.children[act] = MCNode(self.simulator(node.state,act),node)
+        result = self.rollout(node.children[act])
+        self.backPropogate(node.children[act],result)
+
     
     def rollout(self,node):
+        state = node.state
         for _ in range(self.rolloutLimit):
-            w = self.won(node.state)
+            w = self.won(state)  
             if w:
-                pass
+                return w
+
+            acts = self.getActions(state)
+            rotationExpansions = []
+            otherExpansions = []
+            #get actions preferably not rotation
+            for act in acts:
+                if act[0] == "r":
+                    rotationExpansions.append(act)
+                else:
+                    otherExpansions.append(act)
+            if rotationExpansions == [] and otherExpansions == []:
+                return 
+            pickRot = random.random() #random number between 0 and 1
+            pickRot += 0.2 #reduce chance that rotation is picked by 20%
+            pickRot = max(pickRot,1)
+            rotRatio = len(rotationExpansions)/(len(rotationExpansions) + len(otherExpansions))
+            if pickRot <= rotRatio: #if there are only rots this will always be true
+                act = random.choice(rotationExpansions)
+            else:
+                act = random.choice(otherExpansions)
+            
+            state = self.simulator(state,act)
+        return "tie"
+
+    def backPropogate(self,node,result):
+        while node:
+            if result == "tie": 
+                node.wins += 0.5
+            elif result == lc.curPlayer(node.state):
+                node.wins += 1
+            node.plays += 1
+            node.ucb = ucb(node)
+            node = node.parent
+
+    def calculation(self):
+        node = self.select()
+        self.expand(node)
+
+    def updateState(self,state):
+        node = None
+        for act in self.tree.children:
+            if self.tree.children[act] and self.tree.children[act].state == state:
+                node = self.tree.children[act]
+                break
+            elif self.tree.children[act]:
+                deleteTree(self.tree.children[act]) #delete non-chosen subtrees
+        if node == None:
+            print("Warning: impossible transition")
+            deleteTree(self.tree)
+            self.tree = MCNode(state,None)
+            return
+        
+        del self.tree
+        self.tree = node
+        self.tree.parent = None
+    
+    def bestAction(self):
+        maxAct = None
+        maxPlays = 0
+        for act in self.tree.children:
+            if self.tree.children[act]:
+                if self.tree.children[act].plays > maxPlays:
+                    maxAct = act
+                    maxPlays = self.tree.children[act].plays
+        return maxAct
+
+def makeLaserChessMCBot(startState):
+    bot = MCBot(lc.won,lc.getActions,lc.performAction,startState,20000)
+    return bot
+
+
+#------------------------------------------------
