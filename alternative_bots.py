@@ -32,9 +32,9 @@ def mcwon(board):
         return "tie"
     elif len(players) == 1:
         return lc.nextPlayer(players[0])
-    if p1Material / p2Material > 1.33:
+    if p1Material / p2Material > 1.15:
         return "1"
-    elif p2Material / p1Material > 1.33:
+    elif p2Material / p1Material > 1.15:
         return "2"
     return ""
 
@@ -44,7 +44,7 @@ def ucb(node):
         parentPlays = node.plays
     else:
         parentPlays = node.parent.plays
-    winRatio = (node.plays - node.wins) / node.plays 
+    winRatio = (node.plays - node.wins) / node.plays #reversed wins since current node is the result of a choice by parent
     exploration = math.sqrt(2*math.log(parentPlays) / node.plays)
     return winRatio + exploration
 
@@ -202,17 +202,21 @@ class MCBot():
         self.tree.parent = None
     
     def bestAction(self,playingLaserchess):
-        maxAct = None
+        maxActs = []
         maxPlays = 0
         for act in self.tree.children:
             if self.tree.children[act]:
                 if self.tree.children[act].plays > maxPlays:
-                    maxAct = act
+                    maxActs = [act]
                     maxPlays = self.tree.children[act].plays
-        return maxAct
+                elif self.tree.children[act].plays == maxPlays:
+                    maxActs.append(act)
+        if not maxActs:
+            return None
+        return random.choice(maxActs)
 
 def makeLaserChessMCBot(startState):
-    bot = MCBot(mcwon,lc.getActions,lc.performAction,startState,500)
+    bot = MCBot(mcwon,lc.getActions,lc.performAction,startState,700)
     return bot
 
 
