@@ -268,6 +268,47 @@ def beamHits(board,origin,orient):
         
     return hits
 
+def beamVisits(state,action):
+    if action[0] != "f":
+        return []
+    mutBoard = list(board(state))
+
+    laser, lindex = tryFindLaser(board(state),curPlayer(state))
+    lorient = actionOrient(action)
+    
+    #rotate laser 
+    mutBoard[lindex] = rotatePiece(mutBoard[lindex],lorient)
+    
+    board = mutBoard
+    origin = pieceCoords(laser)
+    orient = lorient
+
+    visited = []
+    hits = []
+    toVisit = [(origin,orient)]
+    while toVisit != []:
+        orig,ornt = toVisit.pop()
+        visited.append((orig[0],orig[1],ornt))
+        newPosition = addCoords(orig,dirVector(ornt))
+
+        if outOfBounds(newPosition) or ((newPosition[0],newPosition[1],ornt) in visited):
+            continue
+        
+        hit = tryFindPiece(board,newPosition)
+        if hit == None:
+            toVisit.append((newPosition,ornt))
+        else:
+            hr = hitResult(hit[0],ornt)
+            if hr[0] == "c":
+                hits.append(hit)
+            elif hr[0] == "r":
+                toVisit.append((newPosition,hr[1]))
+            elif hr[0] == "s":
+                toVisit.append((newPosition,hr[1]))
+                toVisit.append((newPosition,hr[2]))
+        
+    return visited
+
 
 #Assumes that the action is valid
 #Checks for this should be made before calling the function

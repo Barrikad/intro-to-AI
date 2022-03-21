@@ -1,15 +1,15 @@
-from copy import deepcopy
 import queue
-from shutil import move
+from subprocess import BELOW_NORMAL_PRIORITY_CLASS
 from threading import Thread
 import time
-from tracemalloc import start
 from bot import *
 import laserchess as lc
 import lc_bot as lcb
 import tictactoe as ttt
 import reach15 as r15
 from frontiers import *
+import matplotlib.pyplot as plt
+import numpy as np
 
 BOT_TICKS = 10000
 
@@ -131,10 +131,27 @@ class botThread(Thread):
                 elif m[0] == "quit":
                     break
 
+def display(fig, ax, pieces, beams, time):
+    board = np.zeros((9,9,3))
+    board += 0.5 
+    board[::2, ::2] = 1 
+    board[1::2, 1::2] = 1 
 
-#OPTIONS
-#printMode: "a" for all states, "e" for only end-state, "n" for none
-def botBattleLaserchess(printMode = "n"):
+    ax.imshow(board, interpolation='nearest')
+
+    extent = np.array([-0.4, 0.4, -0.4, 0.4]) 
+    for p in pieces:
+        ax.imshow(np.rot90(plt.imread('graphics/' + p[3] + p[4] + '.png'), -p[2]), extent=extent + [p[0], p[0], p[1], p[1]])
+
+    for b in beams:
+        ax.imshow(np.rot90(plt.imread('graphics/laser_beam.png'), b[2]), extent=extent + [b[0], b[0], b[1], b[1]])
+
+    ax.set(xticks=[], yticks=[])
+    ax.axis('image')
+    plt.pause(time)
+    ax.clear()
+
+def botBattleLaserchess(pyPlot = False):
     state = lc.startState()
 
     b1in = queue.Queue()
@@ -148,11 +165,16 @@ def botBattleLaserchess(printMode = "n"):
     bot2.daemon = True
     bot1.start()
     bot2.start()
+
+    if pyPlot:
+        fig, ax = plt.subplots()
+        display(fig, ax, state[1], [], 0.5)
+
     time.sleep(2)
 
-    lc.printBoard(state)
+    #lc.printBoard(state)
     for i in range(100):
-        #time.sleep(4)
+        time.sleep(4)
         print("ROUND " + str(i+1))
         b1in.put(("action",))
         act = b1out.get()
@@ -164,8 +186,12 @@ def botBattleLaserchess(printMode = "n"):
         if lc.won(state[1]):
             break
         
-        lc.printBoard(state)
-        #time.sleep(4)
+        if pyPlot:
+            beam = lc.beamVisits(state,act)
+            display(fig,ax,state[1],beam,2)
+        else:
+            lc.printBoard(state)
+        time.sleep(4)
 
         b2in.put(("action",))
         act = b2out.get()
@@ -177,7 +203,12 @@ def botBattleLaserchess(printMode = "n"):
         if lc.won(state[1]):
             break
 
-        lc.printBoard(state)
+        if pyPlot:
+            beam = lc.beamVisits(state,act)
+            display(fig,ax,state[1],beam,2)
+        else:
+            lc.printBoard(state)
+        time.sleep(4)
     print(state)
     b1in.put(("quit",))
     b2in.put(("quit",))
@@ -323,7 +354,11 @@ def laserChessMain():
     while gameMode != "bvb" and gameMode != "pvb":
         gameMode = input("Choose \"pvb\" for player vs bot or \"bvb\" for bot vs bot: ")
     if gameMode == "bvb":
-        botBattleLaserchess()
+        pyplot = input("Do you want pyplot visualization? [y/N] ")
+        if pyplot[0].lower() == "y":
+            botBattleLaserchess(True)
+        else:
+            botBattleLaserchess()
     elif gameMode == "pvb":
         playerVsBotLaserChess()
 
