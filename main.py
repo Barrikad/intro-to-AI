@@ -48,6 +48,7 @@ class botThread(Thread):
         self.name = name
         self.inQueue = inQueue
         self.outQueue = outQueue
+        self.botType = botType
         if botType == "minimax":
             self.bot = lcb.makeLaserChessBot(player,Heap(lambda s : s[0] == player),startState)
         elif botType == "montecarlo":
@@ -56,10 +57,19 @@ class botThread(Thread):
     def run(self):
         while True:
             self.bot.calculate()
+            self.bot.calculate()
             if not self.inQueue.empty():
                 m = self.inQueue.get()
                 if m[0] == "action":
-                    self.outQueue.put(self.bot.bestAction(playingLaserChess=True))
+                    # if self.botType == "montecarlo":
+                    #     for act in self.bot.tree.children:
+                    #         print(act)
+                    #         if self.bot.tree.children[act]:
+                    #             print(self.bot.tree.children[act].wins)
+                    #             print(self.bot.tree.children[act].plays)
+                    #         else:
+                    #             print("None")
+                    self.outQueue.put(self.bot.bestAction(True))
                 elif m[0] == "update":
                     self.bot.updateState(m[1])
                 elif m[0] == "quit":
@@ -111,9 +121,10 @@ def botBattleLaserchess(pyPlot = False,monteCarlo = False):
 
     #lc.printBoard(state)
     for i in range(100):
-        time.sleep(4)
         print("ROUND " + str(i+1))
+        time.sleep(5)
         b1in.put(("action",))
+        time.sleep(1)
         act = b1out.get()
         print("Player 1 move: ")
         print(act)
@@ -128,9 +139,10 @@ def botBattleLaserchess(pyPlot = False,monteCarlo = False):
             display(fig,ax,state[1],beam,2)
         else:
             lc.printBoard(state)
-        time.sleep(4)
 
+        time.sleep(5)
         b2in.put(("action",))
+        time.sleep(1)
         act = b2out.get()
         print("Player 2 move: ")
         print(act)
@@ -145,13 +157,15 @@ def botBattleLaserchess(pyPlot = False,monteCarlo = False):
             display(fig,ax,state[1],beam,2)
         else:
             lc.printBoard(state)
-        time.sleep(4)
-    print(state)
     b1in.put(("quit",))
     b2in.put(("quit",))
     bot1.join()
     bot2.join()
     print("done")
+    print("Final state:")
+    lc.printBoard(state)
+    print("Winner:")
+    print(lc.won(state[1]))
 
 def playerVsBotLaserChess():
     player = ""
@@ -277,14 +291,17 @@ def playerVsBotLaserChess():
                 break
 
             lc.printBoard(state)
-        print(state)
-        if player == "p1":
-            b2in.put(("quit",)) 
-            bot2.join()
-        else:   
-            b1in.put(("quit",))
-            bot1.join()
-        print("done")
+    print(state)
+    if player == "p1":
+        b2in.put(("quit",)) 
+        bot2.join()
+    else:   
+        b1in.put(("quit",))
+        bot1.join()
+    print("Final state:")
+    lc.printBoard(state)
+    print("Winner:")
+    print(lc.won(state[1]))
 
 def laserChessMain():
     gameMode = ""

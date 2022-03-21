@@ -6,6 +6,7 @@ from util import MIN_INT
 import random
 import laserchess as lc
 import math
+import lc_bot as lcb
 
 #heap with lower punishment for steps
 class Heap2(frontiers.Heap):
@@ -15,6 +16,27 @@ class Heap2(frontiers.Heap):
         return iv
 
 #MONTE CARLO BOT-------------------------------
+
+def mcwon(board):
+    players = ["1","2"]
+    p1Material = 0
+    p2Material = 0
+    for piece in board:
+        if lc.pieceName(piece) == "k":
+            players.remove(lc.pieceOwner(piece))
+        if lc.pieceOwner(piece) == "1":
+            p1Material += lcb.eval_piece(lc.pieceName(piece))
+        elif lc.pieceOwner(piece) == "2":
+            p2Material += lcb.eval_piece(lc.pieceName(piece))
+    if players == ["1","2"]:
+        return "tie"
+    elif len(players) == 1:
+        return lc.nextPlayer(players[0])
+    if p1Material / p2Material > 1.33:
+        return "1"
+    elif p2Material / p1Material > 1.33:
+        return "2"
+    return ""
 
 #ucb
 def ucb(node):
@@ -112,6 +134,9 @@ class MCBot():
     def rollout(self,node):
         state = node.state
         for _ in range(self.rolloutLimit):
+            w = self.won(state[1])  
+            if w:
+                return w
             acts = self.getActions(state)
             if not acts:
                 break
@@ -135,9 +160,6 @@ class MCBot():
                 act = random.choice(otherExpansions)
             
             state = self.simulator(state,act)
-        w = self.won(state[1])  
-        if w:
-            return w
         return "tie"
 
     def backPropogate(self,node,result):
@@ -150,7 +172,15 @@ class MCBot():
             node = node.parent
 
     def calculate(self):
-        node = self.select()
+        unexploredRoot = False
+        for act in self.tree.children:
+            if not self.tree.children[act]:
+                unexploredRoot = True
+                break
+        if unexploredRoot:
+            node = self.tree
+        else:
+            node = self.select()
         self.expand(node)
 
     def updateState(self,state):
@@ -171,7 +201,7 @@ class MCBot():
         self.tree = node
         self.tree.parent = None
     
-    def bestAction(self,playingLaserchess = True):
+    def bestAction(self,playingLaserchess):
         maxAct = None
         maxPlays = 0
         for act in self.tree.children:
@@ -182,7 +212,7 @@ class MCBot():
         return maxAct
 
 def makeLaserChessMCBot(startState):
-    bot = MCBot(lc.won,lc.getActions,lc.performAction,startState,100000)
+    bot = MCBot(mcwon,lc.getActions,lc.performAction,startState,500)
     return bot
 
 
